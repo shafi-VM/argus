@@ -1,0 +1,22 @@
+# P2 — Alert -> webhook wiring (A3)
+# Goal: measure latency from alert-trigger to webhook delivery, AND the min eval interval.
+#
+# Steps:
+#   1. Run webhook_server.py (listens :9010).
+#   2. SigNoz -> Settings -> Alert Channels -> New -> Webhook:
+#        URL: http://host.docker.internal:9010/webhook
+#        (Linux: add extra_hosts host.docker.internal:host-gateway to alertmanager,
+#         or put both stacks on one docker network.)
+#   3. Create a threshold alert on a metric you control (e.g. argus_cost_rate).
+#        Set the evaluation frequency as LOW as SigNoz allows -> record the FLOOR.
+#   4. Push the metric over threshold; note trigger time; read webhook received_ms.
+#   5. latency = received_ms - trigger_ms  -> results.md
+#
+# DECISION for LEARN:
+#   if alert->webhook > ~10 s OR the eval floor is too coarse for a live demo,
+#   drive LEARN from query_range polling instead (P1). Alerts then stay notify-only.
+
+sample_channel:
+  name: argus-proof
+  type: webhook
+  url: http://host.docker.internal:9010/webhook

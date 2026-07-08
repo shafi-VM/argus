@@ -1,0 +1,9 @@
+beat,description,run1_s,run2_s,run3_s,median_s,pass_under_10s
+1,chaos injected (hallucination),,,,,
+2,PREVENT intercept,,,,,
+3,reground+retry starts,,,,,
+4,correct answer returned,,,,,
+5,loop/cost chaos injected,,,,,
+6,SigNoz shows drift (LEARN),,,,,
+7,quarantine/reroute fires,,,,,
+8,cost flatlines,,,,,

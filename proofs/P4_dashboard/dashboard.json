@@ -1,0 +1,19 @@
+{
+  "_placeholder": "Replace with the REAL export from SigNoz once built in the UI. This stub documents the PANEL<->METRIC CONTRACT (strict 1:1). See results.md.",
+  "title": "Argus — Intelligence Health",
+  "description": "Infra is green; intelligence is not. The stop-scrolling hero panel.",
+  "tags": ["argus", "hero"],
+  "contract_rule": "Every panel maps to EXACTLY ONE metric. No panel without a metric; no metric without a panel.",
+  "panels": [
+    {"panel": "Infrastructure Health", "metric": "argus_infra_health_ratio", "type": "value", "note": "existing infra signal, shown green for contrast"},
+    {"panel": "Intelligence Health", "metric": "argus_intelligence_health_ratio", "type": "value", "note": "1 - behavioral_failures/requests"},
+    {"panel": "Grounding failures", "metric": "argus_grounding_failed_total", "type": "timeseries"},
+    {"panel": "Runaway cost", "metric": "argus_cost_usd_per_request", "type": "timeseries"},
+    {"panel": "Loop rate", "metric": "argus_reasoning_loop_total", "type": "timeseries"},
+    {"panel": "Blocked responses (PREVENT)", "metric": "argus_prevent_total", "type": "value"},
+    {"panel": "Recoveries", "metric": "argus_recoveries_total", "type": "value"},
+    {"panel": "Users impacted", "metric": "argus_users_impacted", "type": "value"}
+  ],
+  "labels_allowed": ["model", "agent", "tool", "decision", "tenant_bucket"],
+  "cardinality_rule": "NO prompt/user_id/trace_id on metric labels — those live on spans/logs."
+}

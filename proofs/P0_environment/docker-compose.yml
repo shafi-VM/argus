@@ -1,0 +1,21 @@
+# P0 — Our sidecar that runs ALONGSIDE the official SigNoz compose.
+# SigNoz itself comes from github.com/SigNoz/signoz/deploy/docker (do NOT re-implement it).
+# Purpose: the webhook catcher for P2, kept in-repo and version-pinned.
+
+services:
+  argus-webhook:
+    image: python:3.12-slim          # pin to a digest before demo week
+    container_name: argus-webhook
+    working_dir: /app
+    volumes:
+      - ../P2_alert_pipeline:/app
+    command: ["python", "webhook_server.py"]
+    environment:
+      - WEBHOOK_PORT=9010
+    ports:
+      - "9010:9010"          # 9000 collides with ClickHouse native port + a local dev server (P0 baseline)
+    restart: unless-stopped
+
+# From inside the SigNoz containers reach this at http://host.docker.internal:9010/webhook
+# (Linux: add `extra_hosts: ["host.docker.internal:host-gateway"]` to the alertmanager service,
+#  or put both stacks on one shared docker network.)
