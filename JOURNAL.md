@@ -46,4 +46,5 @@ settled decisions.
 2. **Auth cracked:** v0.132 = service-account keys via `SIGNOZ-API-KEY` header + the account **needs a role** (`signoz-viewer`+); missing role → 403.
 3. **Query-API churn:** v4 list needs `aggregateOperator:noop`+`selectColumns`; v5 exists. Measured lag via **ClickHouse directly** (robust) rather than fighting the JSON — will wire the exact query when building the real LEARN poller.
 4. **ADR check:** confirms **ADR-0003** — PREVENT can't wait ~5s (stays inline), LEARN tolerates it. Nothing changed.
-- **Repo:** github.com/shafi-VM/argus (private) has the constitution + harness; these P1 results are staged, ready to commit.
+- **Repo:** github.com/shafi-VM/argus (private) — P0+P1 milestone committed & pushed (`d12e322`).
+- **P3 → 🟢:** recovery span (`argus.recovery.reground`) lands as a **child** of `agent.request` in the SAME trace (`parent_span_id` matches `span_id`). "Postmortem writes itself" mechanic works — one waterfall in SigNoz. Ingestion ~1.5s this run (fast end of P1 range).
