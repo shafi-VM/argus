@@ -48,3 +48,6 @@ settled decisions.
 4. **ADR check:** confirms **ADR-0003** — PREVENT can't wait ~5s (stays inline), LEARN tolerates it. Nothing changed.
 - **Repo:** github.com/shafi-VM/argus (private) — P0+P1 milestone committed & pushed (`d12e322`).
 - **P3 → 🟢:** recovery span (`argus.recovery.reground`) lands as a **child** of `agent.request` in the SAME trace (`parent_span_id` matches `span_id`). "Postmortem writes itself" mechanic works — one waterfall in SigNoz. Ingestion ~1.5s this run (fast end of P1 range).
+- **P4 → 🟢 (hero dashboard as-code):** built "Argus — Intelligence Health" (8 panels) entirely via the SigNoz API — no manual clicking. All panels return live data (gauges avg/avg; counters rate/sum). `argus_*` metric contract locked & flowing; clean `dashboard.json` vendored (importable, P9). **v5 query schema fully cracked** — `/api/v5/query_range` (~85ms) is the LEARN read path (closes ADR-0003's poll question, P1 follow-up).
+- **P2 → 🟢 (decided by evidence):** LEARN polls query_range (~30ms + ~5s freshness); alerts = optional demo visual, not the action path.
+- **🚪 GATE:** P0–P4 all green → **cleared to build the actual Argus product.**

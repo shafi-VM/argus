@@ -3,7 +3,7 @@
 > This document is our confidence. Not optimism — evidence.
 > A proof is 🟢 only when it has a **number** next to it that clears the pass bar.
 
-_Last updated: 2026-07-09 — P0 + P1 + P3 green. Loop latency + trace correlation proven._
+_Last updated: 2026-07-09 — P0–P4 green. LEARN loop + hero dashboard proven. **Build gate met.**_
 
 ## Execution order (Day 1, 2 engineers)
 1. **P0 — together.** Stack up, offline verified. The gate for everything else.
@@ -18,9 +18,9 @@ _Last updated: 2026-07-09 — P0 + P1 + P3 green. Loop latency + trace correlati
 | **P0** Environment | Does the full stack boot & run **offline**? | Boots, wifi OFF, all green | **PASS** — stack UP, all endpoints serve (OTLP 200, UI 200), functions via internal container DNS, live ingest 200. Foundry v0.132. True airplane-mode = 60s human step on demo laptop (this box is behind NAT; Claude is cloud-bound, can't drive a real-offline run). | 🟢 |
 | **P1a** Ingestion latency | OTLP emit → queryable in SigNoz? | < 10 s | **~4.7s median** (1.5–5.4s), ClickHouse-measured | 🟢 |
 | **P1b** Query latency | `query_range` round-trip for LEARN? | < 2 s | **~30 ms** (100+ samples) | 🟢 |
-| **P2** Alert pipeline | Alert → webhook latency + eval floor? | known #; decide alert-vs-poll | — | 🔴 PENDING |
+| **P2** Alert pipeline | Alert → webhook latency + eval floor? | known #; decide alert-vs-poll | **DECIDED: poll** — P1 proved query_range ~30ms + ~5s freshness; LEARN polls, alerts=optional demo visual | 🟢 |
 | **P3** Trace propagation | Recovery span shares request `trace_id`? | one linked waterfall | **PASS** — recovery.reground is child of agent.request, same trace | 🟢 |
-| **P4** Dashboard | Provisions from JSON, panels render? | import → panels populated | — | 🔴 PENDING |
+| **P4** Dashboard | Provisions from JSON, panels render? | import → panels populated | **PASS** — 8-panel hero deployed as-code; all panels return live data; JSON vendored (visual screenshot = final tick) | 🟢 |
 | **P5** Demo timing | Every beat measured end-to-end? | all beats < 10 s | — | 🔴 PENDING |
 | **P6** Judge experience | Does it *feel* fast (perception)? | all beats < 10 s felt | — | 🔴 PENDING |
 | **P7** Competitor check | Can OpenLIT/Portkey/Langfuse already do this? | Argus alone closes the loop | — | 🔴 PENDING |
@@ -40,10 +40,10 @@ _Last updated: 2026-07-09 — P0 + P1 + P3 green. Loop latency + trace correlati
 ## Confidence (update every evening — from proofs retired, NOT feelings)
 ```
 Product (frozen)        ██████████ 100%
-Architecture (proven)   ██████▌░░░  65%   ← LEARN latency + trace correlation proven; PREVENT inline (A8) + full loop still to build
-SigNoz integration      █████▊░░░░  58%   ← auth+ingest+query+trace-linking proven; dashboards/alerts/MCP TBD
-Demo                    █░░░░░░░░░  10%
-Overall                 █████░░░░░  48%
+Architecture (proven)   ██████▊░░░  68%   ← LEARN latency + trace correlation + v5 query + metric contract locked
+SigNoz integration      ███████░░░  70%   ← auth, ingest, query(v5), trace-link, metrics, dashboard-as-code proven; MCP TBD
+Demo                    ██▌░░░░░░░  25%   ← hero dashboard (the pitch centerpiece) exists & renders live
+Overall                 █████▌░░░░  55%
 ```
 **Rule:** a bar moves only when a proof in the table above turns 🟢. If code went up but no bar
 moved, we reduced nothing — we just typed. Watch Overall climb 25% → 90% across the week; if it

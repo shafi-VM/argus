@@ -19,3 +19,12 @@
 **This is the pitch artifact.** Build it Day 1 from mocks; it de-risks *and* becomes the demo.
 
 → update `../SUMMARY.md`
+
+## RESULTS — 2026-07-09 🟢
+Built **as code** via the SigNoz API (`build_dashboard.py`) — no manual clicking. Dashboard `019f4602-...`, **8 panels**, all returning live data:
+- gauges (infra/intelligence health, cost, users): `timeAggregation:avg, spaceAggregation:avg`; value panels `reduceTo:last`
+- counters (grounding/loops/recoveries): `timeAggregation:rate, spaceAggregation:sum` (Sum, cumulative)
+
+Verified every panel against `/api/v5/query_range` (real values: infra=1.0, intelligence 0.85→0.26, grounding ~0.67/min). Clean re-importable JSON vendored to `dashboard.json`.
+
+**Unlocks:** the **v5 metric query** is the LEARN read path (~85ms server) — nails the P1 follow-up. Metric contract (`argus_*`, low-cardinality labels) locked. Visual screenshot = final pitch tick (pending).

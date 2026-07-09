@@ -1,19 +1,566 @@
 {
-  "_placeholder": "Replace with the REAL export from SigNoz once built in the UI. This stub documents the PANEL<->METRIC CONTRACT (strict 1:1). See results.md.",
-  "title": "Argus — Intelligence Health",
   "description": "Infra is green; intelligence is not. The stop-scrolling hero panel.",
-  "tags": ["argus", "hero"],
-  "contract_rule": "Every panel maps to EXACTLY ONE metric. No panel without a metric; no metric without a panel.",
-  "panels": [
-    {"panel": "Infrastructure Health", "metric": "argus_infra_health_ratio", "type": "value", "note": "existing infra signal, shown green for contrast"},
-    {"panel": "Intelligence Health", "metric": "argus_intelligence_health_ratio", "type": "value", "note": "1 - behavioral_failures/requests"},
-    {"panel": "Grounding failures", "metric": "argus_grounding_failed_total", "type": "timeseries"},
-    {"panel": "Runaway cost", "metric": "argus_cost_usd_per_request", "type": "timeseries"},
-    {"panel": "Loop rate", "metric": "argus_reasoning_loop_total", "type": "timeseries"},
-    {"panel": "Blocked responses (PREVENT)", "metric": "argus_prevent_total", "type": "value"},
-    {"panel": "Recoveries", "metric": "argus_recoveries_total", "type": "value"},
-    {"panel": "Users impacted", "metric": "argus_users_impacted", "type": "value"}
+  "layout": [
+    {
+      "h": 4,
+      "i": "5fba266c-3063-4da8-8145-70e894b709e1",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "h": 4,
+      "i": "cda6410f-1afb-4067-b0c5-cd75e3b3c69a",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 6,
+      "y": 0
+    },
+    {
+      "h": 6,
+      "i": "9f593389-457d-4ebb-b613-1042832c49f1",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 0,
+      "y": 4
+    },
+    {
+      "h": 6,
+      "i": "4f8412d6-e725-42e1-9c53-bb37230af061",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 6,
+      "y": 4
+    },
+    {
+      "h": 4,
+      "i": "3b0225fb-0827-459c-a262-325bc68040ee",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 0,
+      "y": 10
+    },
+    {
+      "h": 6,
+      "i": "7e09429a-ed5c-4375-bb25-b55f5afcfec8",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 6,
+      "y": 10
+    },
+    {
+      "h": 6,
+      "i": "805e13ce-1082-46de-a01b-ed218f8c4720",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 0,
+      "y": 14
+    },
+    {
+      "h": 6,
+      "i": "5ab23c39-462c-49b7-8ffc-7b3cacbf602a",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 6,
+      "y": 16
+    }
   ],
-  "labels_allowed": ["model", "agent", "tool", "decision", "tenant_bucket"],
-  "cardinality_rule": "NO prompt/user_id/trace_id on metric labels — those live on spans/logs."
+  "panelMap": {},
+  "tags": [
+    "argus",
+    "hero"
+  ],
+  "title": "Argus \u2014 Intelligence Health",
+  "version": "v5",
+  "widgets": [
+    {
+      "description": "",
+      "id": "5fba266c-3063-4da8-8145-70e894b709e1",
+      "isStacked": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "value",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregations": [
+                {
+                  "metricName": "argus_infra_health_ratio",
+                  "reduceTo": "last",
+                  "spaceAggregation": "avg",
+                  "temporality": null,
+                  "timeAggregation": "avg"
+                }
+              ],
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "functions": [],
+              "groupBy": [],
+              "having": {
+                "expression": ""
+              },
+              "legend": "",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "stepInterval": 60
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "7bcd0b72-74c5-489a-a9ce-ea1dacfa83e0",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder"
+      },
+      "timePreferance": "GLOBAL_TIME",
+      "title": "\ud83d\udfe2 Infrastructure Health",
+      "yAxisUnit": ""
+    },
+    {
+      "description": "",
+      "id": "cda6410f-1afb-4067-b0c5-cd75e3b3c69a",
+      "isStacked": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "value",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregations": [
+                {
+                  "metricName": "argus_intelligence_health_ratio",
+                  "reduceTo": "last",
+                  "spaceAggregation": "avg",
+                  "temporality": null,
+                  "timeAggregation": "avg"
+                }
+              ],
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "functions": [],
+              "groupBy": [],
+              "having": {
+                "expression": ""
+              },
+              "legend": "",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "stepInterval": 60
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "9ef1ca2c-7a9a-4f8f-a171-bcba0d176e22",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder"
+      },
+      "timePreferance": "GLOBAL_TIME",
+      "title": "\ud83d\udd34 Intelligence Health",
+      "yAxisUnit": ""
+    },
+    {
+      "description": "",
+      "id": "9f593389-457d-4ebb-b613-1042832c49f1",
+      "isStacked": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregations": [
+                {
+                  "metricName": "argus_intelligence_health_ratio",
+                  "reduceTo": "avg",
+                  "spaceAggregation": "avg",
+                  "temporality": null,
+                  "timeAggregation": "avg"
+                }
+              ],
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "functions": [],
+              "groupBy": [],
+              "having": {
+                "expression": ""
+              },
+              "legend": "",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "stepInterval": 60
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "6d98852b-11db-4d98-9c3a-e82823d5a90e",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder"
+      },
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Intelligence Health \u2014 trend",
+      "yAxisUnit": ""
+    },
+    {
+      "description": "",
+      "id": "4f8412d6-e725-42e1-9c53-bb37230af061",
+      "isStacked": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregations": [
+                {
+                  "metricName": "argus_cost_usd_per_request",
+                  "reduceTo": "avg",
+                  "spaceAggregation": "avg",
+                  "temporality": null,
+                  "timeAggregation": "avg"
+                }
+              ],
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "functions": [],
+              "groupBy": [],
+              "having": {
+                "expression": ""
+              },
+              "legend": "",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "stepInterval": 60
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "ff8b2d02-8530-42a6-8390-68d87a0784bc",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder"
+      },
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Cost $/request",
+      "yAxisUnit": "none"
+    },
+    {
+      "description": "",
+      "id": "3b0225fb-0827-459c-a262-325bc68040ee",
+      "isStacked": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "value",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregations": [
+                {
+                  "metricName": "argus_users_impacted",
+                  "reduceTo": "last",
+                  "spaceAggregation": "avg",
+                  "temporality": null,
+                  "timeAggregation": "avg"
+                }
+              ],
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "functions": [],
+              "groupBy": [],
+              "having": {
+                "expression": ""
+              },
+              "legend": "",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "stepInterval": 60
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "8a74b308-d6cd-42b3-8221-d514cdf64374",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder"
+      },
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Users impacted",
+      "yAxisUnit": ""
+    },
+    {
+      "description": "",
+      "id": "7e09429a-ed5c-4375-bb25-b55f5afcfec8",
+      "isStacked": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregations": [
+                {
+                  "metricName": "argus_grounding_failed_total",
+                  "reduceTo": "sum",
+                  "spaceAggregation": "sum",
+                  "temporality": null,
+                  "timeAggregation": "rate"
+                }
+              ],
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "functions": [],
+              "groupBy": [],
+              "having": {
+                "expression": ""
+              },
+              "legend": "",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "stepInterval": 60
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "c09080dd-ae3d-4105-a8f9-ef93967ff92f",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder"
+      },
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Grounding failures (rate)",
+      "yAxisUnit": ""
+    },
+    {
+      "description": "",
+      "id": "805e13ce-1082-46de-a01b-ed218f8c4720",
+      "isStacked": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregations": [
+                {
+                  "metricName": "argus_reasoning_loop_total",
+                  "reduceTo": "sum",
+                  "spaceAggregation": "sum",
+                  "temporality": null,
+                  "timeAggregation": "rate"
+                }
+              ],
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "functions": [],
+              "groupBy": [],
+              "having": {
+                "expression": ""
+              },
+              "legend": "",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "stepInterval": 60
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "be3ca747-32d0-426d-af20-6f94c7a22e8a",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder"
+      },
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Reasoning loops (rate)",
+      "yAxisUnit": ""
+    },
+    {
+      "description": "",
+      "id": "5ab23c39-462c-49b7-8ffc-7b3cacbf602a",
+      "isStacked": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregations": [
+                {
+                  "metricName": "argus_recoveries_total",
+                  "reduceTo": "sum",
+                  "spaceAggregation": "sum",
+                  "temporality": null,
+                  "timeAggregation": "rate"
+                }
+              ],
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "functions": [],
+              "groupBy": [],
+              "having": {
+                "expression": ""
+              },
+              "legend": "",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "stepInterval": 60
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "f4f317e6-4560-452a-a079-a5635a8e2410",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder"
+      },
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Recoveries (rate)",
+      "yAxisUnit": ""
+    }
+  ]
 }
