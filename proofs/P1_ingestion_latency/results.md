@@ -45,3 +45,25 @@ T3  visible on dashboard = T2 + panel refresh cadence (a UI setting, NOT a bug)
   export SIGNOZ_URL=http://localhost:8081 SIGNOZ_API_KEY=<pat>
   ```
 - Admin already provisioned via `/api/v1/register`: `argus@local.dev` (local/throwaway creds).
+- Service account **needs a role** (`signoz-viewer`/`editor`/`admin`) or the key gets **403** `"only viewers/editors/admins can access this resource"`.
+
+## RESULTS — 2026-07-09 🟢
+**A1 query API RTT:** ~25–56 ms (100+ samples, `/api/v4/query_range`) → **PASS (<2s)**.
+**A4 ingestion lag (emit → queryable):**
+
+| run | lag_ms |
+|-----|--------|
+| 1 | 1518 |
+| 2 | 4346 |
+| 3 | 4917 |
+| 4 | 4701 |
+| 5 | 5351 |
+| **median** | **4701 (~4.7s)** |
+
+→ **PASS (<10s)**. Range 1.5–5.4s (includes ~0.3s poll granularity + docker-exec overhead → true lag slightly lower).
+
+**Method:** measured against ClickHouse (`signoz_traces.distributed_signoz_index_v3`, `attributes_string['argus.run_id']`) — the store SigNoz queries. Query layer adds only the ~30ms RTT above, so emit→ClickHouse ≈ emit→queryable.
+
+**Architecture implication:** **LEARN loop is viable** — behavioral data queryable within ~5s, inside a windowed-detection budget. Confirms ADR-0003 (PREVENT inline; LEARN tolerates ~5s). No ADR changed.
+
+**Follow-up (not blocking):** v4 *list* query needs `aggregateOperator:noop` + `selectColumns`; or use v5 `/api/v5/query_range`. Nail the exact payload when wiring the real LEARN poller.

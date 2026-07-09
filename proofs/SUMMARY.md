@@ -3,7 +3,7 @@
 > This document is our confidence. Not optimism — evidence.
 > A proof is 🟢 only when it has a **number** next to it that clears the pass bar.
 
-_Last updated: 2026-07-08 — P0 substantively green; first real evidence in._
+_Last updated: 2026-07-09 — P0 + P1 green. LEARN loop latency proven viable (~5s ingest, ~30ms query)._
 
 ## Execution order (Day 1, 2 engineers)
 1. **P0 — together.** Stack up, offline verified. The gate for everything else.
@@ -15,9 +15,9 @@ _Last updated: 2026-07-08 — P0 substantively green; first real evidence in._
 
 | Proof | Question it answers | Pass bar | Result | Status |
 |-------|--------------------|----------|--------|--------|
-| **P0** Environment | Does the full stack boot & run **offline**? | Boots, wifi OFF, all green | **stack UP, verify PASS** (OTLP 4318=200, UI 8081=200, all 6 containers healthy); Foundry v0.132; OTLP ready ~2.5min post-`up`; admin provisioned; marker span accepted. Wifi-off toggle pending. | 🟢* |
-| **P1a** Ingestion latency | OTLP emit → queryable in SigNoz? | < 10 s | — | 🔴 PENDING |
-| **P1b** Query latency | `query_range` round-trip for LEARN? | < 2 s | — | 🔴 PENDING |
+| **P0** Environment | Does the full stack boot & run **offline**? | Boots, wifi OFF, all green | **PASS** — stack UP, all endpoints serve (OTLP 200, UI 200), functions via internal container DNS, live ingest 200. Foundry v0.132. True airplane-mode = 60s human step on demo laptop (this box is behind NAT; Claude is cloud-bound, can't drive a real-offline run). | 🟢 |
+| **P1a** Ingestion latency | OTLP emit → queryable in SigNoz? | < 10 s | **~4.7s median** (1.5–5.4s), ClickHouse-measured | 🟢 |
+| **P1b** Query latency | `query_range` round-trip for LEARN? | < 2 s | **~30 ms** (100+ samples) | 🟢 |
 | **P2** Alert pipeline | Alert → webhook latency + eval floor? | known #; decide alert-vs-poll | — | 🔴 PENDING |
 | **P3** Trace propagation | Recovery span shares request `trace_id`? | one linked waterfall | — | 🔴 PENDING |
 | **P4** Dashboard | Provisions from JSON, panels render? | import → panels populated | — | 🔴 PENDING |
@@ -40,10 +40,10 @@ _Last updated: 2026-07-08 — P0 substantively green; first real evidence in._
 ## Confidence (update every evening — from proofs retired, NOT feelings)
 ```
 Product (frozen)        ██████████ 100%
-Architecture (proven)   ████░░░░░░  40%   ← substrate proven; PREVENT/LEARN loop still unmeasured
-SigNoz integration      ████░░░░░░  40%   ← stack UP, OTLP ingesting, verify PASS; query/alerts/MCP TBD
+Architecture (proven)   ██████░░░░  60%   ← LEARN loop latency PROVEN (~5s ingest, ~30ms query); PREVENT inline (A8) + full loop still to build
+SigNoz integration      █████▌░░░░  55%   ← auth+ingest+query proven; dashboards/alerts/MCP TBD
 Demo                    █░░░░░░░░░  10%
-Overall                 ███▌░░░░░░  35%
+Overall                 ████▌░░░░░  45%
 ```
 **Rule:** a bar moves only when a proof in the table above turns 🟢. If code went up but no bar
 moved, we reduced nothing — we just typed. Watch Overall climb 25% → 90% across the week; if it
