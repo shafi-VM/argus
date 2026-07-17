@@ -3,7 +3,15 @@
 > This document is our confidence. Not optimism — evidence.
 > A proof is 🟢 only when it has a **number** next to it that clears the pass bar.
 
-_Last updated: 2026-07-09 — P0–P4 green. LEARN loop + hero dashboard proven. **Build gate met.**_
+_Last updated: 2026-07-17 — P0–P4 green. P7 🟡 (desk research; hands-on outstanding). P8 checklist
+written, unticked. **Build gate met — but the build is rule-locked until Jul 20.**_
+
+> **⛔ Pre-hackathon lock (Jul 17 → Jul 20).** Hackathon rule: *"Teams can plan and discuss strategy in
+> advance, but **coding and design work should begin only after the hackathon starts**."* Permitted
+> now: **written notes, sketches, diagrams**. The build gate being met does **not** unlock the build.
+> **P5, P6, P9 are therefore not "pending" — they are *unreachable*.** All three measure a product that
+> cannot legally exist yet. The only way to turn them green today is to invent numbers, which is the
+> one thing this file exists to prevent.
 
 ## Execution order (Day 1, 2 engineers)
 1. **P0 — together.** Stack up, offline verified. The gate for everything else.
@@ -21,11 +29,11 @@ _Last updated: 2026-07-09 — P0–P4 green. LEARN loop + hero dashboard proven.
 | **P2** Alert pipeline | Alert → webhook latency + eval floor? | known #; decide alert-vs-poll | **DECIDED: poll** — P1 proved query_range ~30ms + ~5s freshness; LEARN polls, alerts=optional demo visual | 🟢 |
 | **P3** Trace propagation | Recovery span shares request `trace_id`? | one linked waterfall | **PASS** — recovery.reground is child of agent.request, same trace | 🟢 |
 | **P4** Dashboard | Provisions from JSON, panels render? | import → panels populated | **PASS** — 8-panel hero deployed as-code; all panels return live data; JSON vendored (visual screenshot = final tick) | 🟢 |
-| **P5** Demo timing | Every beat measured end-to-end? | all beats < 10 s | — | 🔴 PENDING |
-| **P6** Judge experience | Does it *feel* fast (perception)? | all beats < 10 s felt | — | 🔴 PENDING |
-| **P7** Competitor check | Can OpenLIT/Portkey/Langfuse already do this? | Argus alone closes the loop | — | 🔴 PENDING |
-| **P8** Observability quality | Would a SigNoz eng say "they get OTel"? | checklist all ✓ | — | 🔴 PENDING |
-| **P9** Judge install | Clone → `compose up` → hero dashboard, no edits? | < 10 min, 0 manual steps | — | 🔴 PENDING |
+| **P5** Demo timing | Every beat measured end-to-end? | all beats < 10 s | — | 🔴 **BLOCKED** — needs the product; rule-locked until Jul 20 |
+| **P6** Judge experience | Does it *feel* fast (perception)? | all beats < 10 s felt | — | 🔴 **BLOCKED** — needs the product; rule-locked until Jul 20 |
+| **P7** Competitor check | Can OpenLIT/Portkey/Langfuse already do this? | Argus alone closes the loop | **PARTIAL** — 11 tools researched from **source/docs/licenses**, NOT run first-hand (the bar says "actually try each"). **Found 3 refutations of our own claim.** Wedge survives but is **narrower**: nobody closes the loop from a windowed **content** signal — Portkey/LiteLLM breakers fire on **HTTP codes**. ⚠️ **Our frozen one-liner is factually refutable** — see `P7_competitor_check/matrix.md`. | 🟡 |
+| **P8** Observability quality | Would a SigNoz eng say "they get OTel"? | checklist all ✓ | **Checklist WRITTEN, 0 boxes ticked** — ticking requires telemetry that doesn't exist. Key find: **GenAI semconv left core semconv in v1.42.0** for `semantic-conventions-genai` (unversioned, zero releases); **`gen_ai.system` was removed** → `gen_ai.provider.name`. Most blogs/LLM training data are stale. | 🔴 |
+| **P9** Judge install | Clone → `compose up` → hero dashboard, no edits? | < 10 min, 0 manual steps | — | 🔴 **BLOCKED** — needs the product; rule-locked until Jul 20 |
 
 ## Decision gate
 - If **P1b > 2 s** or **P2 too slow/coarse** → LEARN runs on `query_range` polling (already default). Confirm, don't pivot.
@@ -48,3 +56,14 @@ Overall                 █████▌░░░░  55%
 **Rule:** a bar moves only when a proof in the table above turns 🟢. If code went up but no bar
 moved, we reduced nothing — we just typed. Watch Overall climb 25% → 90% across the week; if it
 stalls while commits pile up, we're building, not de-risking.
+
+**2026-07-17 — no bar moved, and that is correct.** P7 landed at 🟡, not 🟢: its bar says *"actually try
+each — first-hand"* and we only read source and docs. P8's checklist is written but every box is
+unticked. Real work happened; **no proof turned green; therefore nothing moves.** This is the rule
+working, not the rule failing. The temptation to nudge Demo to 30% because the day *felt* productive
+is exactly what these bars exist to refuse.
+
+**One bar arguably should go DOWN, and we're leaving it — flagging instead.** P7 found that our frozen
+one-liner is **factually refutable** (Portkey's breaker is windowed; OpenLIT's guards block inline).
+Competitive risk didn't fall today — it got *better understood*, and the pitch got *worse* until a
+human fixes the line. **Overall stays 55%.**
