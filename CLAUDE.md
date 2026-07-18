@@ -13,7 +13,7 @@ Every session begins with: **"What proof are we retiring today?"** — not "what
 ## The product in one breath
 > AI infra can be perfectly healthy while AI behavior is catastrophically wrong.
 > Argus detects behavioral failures infra monitoring can't see and recovers before users notice.
-> **Portkey guards one call. OpenLIT watches. Argus closes the loop.**
+> **Portkey breaks the circuit on errors. OpenLIT watches. Argus closes the loop on behavior.**
 
 ## Two superpowers (only these)
 - **PREVENT** (via **Behavior Guard**) — inline, in the gateway, milliseconds. Bad response → intercept → recover. *Depends on nothing external.*

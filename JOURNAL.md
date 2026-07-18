@@ -114,4 +114,9 @@ settled decisions.
 - **P3 → 🟢:** recovery span (`argus.recovery.reground`) lands as a **child** of `agent.request` in the SAME trace (`parent_span_id` matches `span_id`). "Postmortem writes itself" mechanic works — one waterfall in SigNoz. Ingestion ~1.5s this run (fast end of P1 range).
 - **P4 → 🟢 (hero dashboard as-code):** built "Argus — Intelligence Health" (8 panels) entirely via the SigNoz API — no manual clicking. All panels return live data (gauges avg/avg; counters rate/sum). `argus_*` metric contract locked & flowing; clean `dashboard.json` vendored (importable, P9). **v5 query schema fully cracked** — `/api/v5/query_range` (~85ms) is the LEARN read path (closes ADR-0003's poll question, P1 follow-up).
 - **P2 → 🟢 (decided by evidence):** LEARN polls query_range (~30ms + ~5s freshness); alerts = optional demo visual, not the action path.
-- **🚪 GATE:** P0–P4 all green → **cleared to build the actual Argus product.**
+- **🚪 GATE:** P0–P4 all green → **cleared to build the actual Argus product.** ⚠️ *Corrected 2026-07-18: cleared in principle, but **rule-locked until Jul 20** — no product code before the hackathon starts.*
+
+## Day 4 — 2026-07-18 (Shafi + Claude: one-liner locked, demo script drafted)
+- **One-liner LOCKED** (Shafi's call, per **P7** evidence): *"Portkey breaks the circuit on errors. OpenLIT watches. Argus closes the loop on behavior."* Updated in VISION / TERMINOLOGY / README / CLAUDE with a dated rationale note. The frozen text changed because **reality disagreed** (Portkey's breaker is windowed) — the process working, not failing.
+- **`DEMO_SCRIPT.md` drafted** — 5-min storyboard, a wow every ~30 s, beats tagged PROVEN vs TO-BUILD, P7 objection-proofing baked in. Written notes only → rule-legal.
+- **⚠️ URGENT (Abhishek flagged Jul 17): the Pre-Event blog track deadline is Jul 19 — TOMORROW.** Writing → rule-legal now; material is sitting ready (physics lie, Foundry deprecation, healthy-but-not-ingesting race); nobody has started it. Highest-urgency legal work left in the pre-hackathon window.

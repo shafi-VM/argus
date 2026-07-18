@@ -25,7 +25,7 @@ Fast reflexes. Slow adaptation. An immune system.
 
 ## Positioning (one line)
 
-**Portkey guards one call. OpenLIT watches. Argus closes the loop.**
+**Portkey breaks the circuit on errors. OpenLIT watches. Argus closes the loop on behavior.**
 
 ---
 

@@ -26,4 +26,6 @@ vaccination…) opens the door in a pitch. The engineering names above are canon
 Never name a function `antibody()`.
 
 ## The one-liner (verbatim, everywhere)
-> Portkey guards one call. OpenLIT watches. **Argus closes the loop.**
+> **Portkey breaks the circuit on errors. OpenLIT watches. Argus closes the loop on behavior.**
+
+_Updated 2026-07-18 (Shafi's call) per **P7** evidence: the old "Portkey guards one call" was factually refutable — Portkey ships a **windowed** circuit breaker. What survives every refutation: **everyone else's loop fires on transport health (HTTP codes); ours fires on behavioral quality while every call returns 200.** See `proofs/P7_competitor_check/matrix.md`._

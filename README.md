@@ -6,7 +6,7 @@
 >
 > Built on OpenTelemetry. Powered by [SigNoz](https://signoz.io).
 
-**Portkey guards one call. OpenLIT watches. Argus closes the loop.**
+**Portkey breaks the circuit on errors. OpenLIT watches. Argus closes the loop on behavior.**
 
 ---
 
