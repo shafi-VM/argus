@@ -120,3 +120,10 @@ settled decisions.
 - **One-liner LOCKED** (Shafi's call, per **P7** evidence): *"Portkey breaks the circuit on errors. OpenLIT watches. Argus closes the loop on behavior."* Updated in VISION / TERMINOLOGY / README / CLAUDE with a dated rationale note. The frozen text changed because **reality disagreed** (Portkey's breaker is windowed) — the process working, not failing.
 - **`DEMO_SCRIPT.md` drafted** — 5-min storyboard, a wow every ~30 s, beats tagged PROVEN vs TO-BUILD, P7 objection-proofing baked in. Written notes only → rule-legal.
 - **⚠️ URGENT (Abhishek flagged Jul 17): the Pre-Event blog track deadline is Jul 19 — TOMORROW.** Writing → rule-legal now; material is sitting ready (physics lie, Foundry deprecation, healthy-but-not-ingesting race); nobody has started it. Highest-urgency legal work left in the pre-hackathon window.
+
+## Hackathon Day 1 — 2026-07-20 (build UNLOCKED)
+- **🟢 Day-1 GATE (issues #2–#4): the spine is real.** `argusd` (Go, OTel-instrumented) + Ada (Python agent) + a deterministic mock LLM → **one linked cross-service trace** in SigNoz: `invoke_agent ada` (ada-agent, root) → `chat gpt-4o` (argusd, child), verified via `parent_span_id`. W3C traceparent crosses the Python→Go boundary cleanly; **no orphans**.
+- **First real product telemetry** — ticks P8: `gen_ai.provider.name` (not the removed `gen_ai.system`), `invoke_agent {name}` + `chat {model}` span names, CLIENT span kind, cross-boundary propagation.
+- **The mock LLM is deliberate, not a shortcut:** a deterministic upstream IS the demo's airplane-mode replay engine (DEMO_RISK). The real LLM key plugs in for grounding on Day 2. Chaos will make it return a wrong answer on cue.
+- **Architecture note:** argusd is a drop-in OpenAI-compatible proxy (agent points `base_url` at it) — framework-agnostic by construction, which is exactly the "works with any OTel-emitting agent" claim.
+- **Next (Day 2):** PREVENT — inline grounding check → block → re-ground → recover. The money moment.
