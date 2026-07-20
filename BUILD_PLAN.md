@@ -35,8 +35,8 @@ answer gets caught and fixed while the user never notices.
 - **B:** chaos toggle #2 — subtle drift (quality decays; every call still returns 200).
 - 🎯 EOD gate: **drift over a window → SigNoz catches → Argus quarantines**, dashboard shows it live.
 
-### Day 4 (Jul 23) — Chaos suite + Mission Control + security beat
-- **A:** Mission Control page served by `argusd` (status + last action). Chaos suite (~20 faults).
+### Day 4 (Jul 23) — Mission Control + one chaos button + security beat
+- **A:** Mission Control page served by `argusd` (status + last action). **One** deterministic chaos button firing the 2–3 demo faults (hallucination, drift, injection) — per KILL_LIST, **no suite** (see #19).
 - **B:** injection/exfil beat; the "vaccination" fast-forward run.
 - 🎯 EOD gate: every beat in `DEMO_SCRIPT.md` exists and fires from the god-mode panel.
 
