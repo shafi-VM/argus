@@ -1,0 +1,15 @@
+{
+  "_comment": "Single source of truth for the SFO->JFK booking flow. Shared by Ada (agent), the mock LLM (replay engine), and argusd's grounding check (#5). Language-neutral on purpose: the Go check reads this same file. The grounded answer cites AA42 (present in tool_context.results); the hallucinated answer cites UA99 (absent) -> detectable by comparing the claimed flight id against the retrieved context.",
+  "user_prompt": "Book me a flight from SFO to JFK next Tuesday.",
+  "tool_context": {
+    "tool": "flight_search",
+    "query": "SFO -> JFK next Tuesday",
+    "results": [
+      { "flight": "AA42", "depart": "SFO 09:15", "arrive": "JFK 17:40", "stops": 0 }
+    ]
+  },
+  "responses": {
+    "grounded": "Flight AA42 departs SFO 09:15, arrives JFK 17:40, nonstop.",
+    "hallucinated": "Flight UA99 departs SFO 06:00, arrives JFK 14:30, nonstop."
+  }
+}
