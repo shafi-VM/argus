@@ -21,6 +21,11 @@ from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExport
 
 ARGUS = os.getenv("ARGUS_URL", "http://localhost:8088")
 
+# Single source of truth, shared with the mock LLM and (next) argusd's grounding check.
+_FIXTURE = os.path.join(os.path.dirname(__file__), "..", "fixtures", "booking.json")
+with open(_FIXTURE, encoding="utf-8") as _f:
+    FIXTURE = json.load(_f)
+
 _provider = TracerProvider(resource=Resource.create(
     {"service.name": "ada-agent", "service.version": "0.1.0"}))
 _provider.add_span_processor(SimpleSpanProcessor(
@@ -38,9 +43,18 @@ def chat(prompt: str) -> str:
         headers = {"Content-Type": "application/json"}
         propagate.inject(headers)  # inject traceparent -> argusd parents its span on ours
 
+        # Carry the retrieved tool context IN the request. This is the "provided
+        # context" argusd's grounding check (#5) compares the answer against — the
+        # detector grounds claims-vs-context, so the context must travel in-band.
+        context = json.dumps(FIXTURE["tool_context"])
         body = json.dumps({
             "model": "gpt-4o",
-            "messages": [{"role": "user", "content": prompt}],
+            "messages": [
+                {"role": "system", "content":
+                    "You are a booking assistant. Answer ONLY using this retrieved "
+                    f"flight data.\nRETRIEVED_CONTEXT: {context}"},
+                {"role": "user", "content": prompt},
+            ],
         }).encode()
         req = urllib.request.Request(
             f"{ARGUS}/v1/chat/completions", data=body, headers=headers, method="POST")
@@ -54,5 +68,5 @@ def chat(prompt: str) -> str:
 
 if __name__ == "__main__":
     print("Ada: booking SFO -> JFK ...")
-    print("Ada answer:", chat("Book me a flight from SFO to JFK next Tuesday."))
+    print("Ada answer:", chat(FIXTURE["user_prompt"]))
     _provider.force_flush()
