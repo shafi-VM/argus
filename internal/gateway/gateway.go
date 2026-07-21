@@ -88,6 +88,22 @@ func (g *Gateway) ChatCompletions(w http.ResponseWriter, r *http.Request) {
 		g.fail(w, span, err)
 		return
 	}
+
+	// #25: an upstream non-2xx must NEVER read as a healthy, grounded pass. An error
+	// body carries no entity claims, so the Grounding Check would happily call it
+	// "grounded" and leave the span UNSET (= success). Mark it, skip the check, and
+	// pass the status through unchanged. Telemetry correctness is product correctness.
+	if status >= 400 {
+		span.SetStatus(codes.Error, http.StatusText(status))
+		span.SetAttributes(
+			attribute.String("error.type", errorTypeFor(status)),
+			attribute.Int("argus.upstream.status", status),
+			attribute.String("argus.decision", "upstream_error"),
+		)
+		writeJSON(w, status, respBody)
+		return
+	}
+
 	recordUsage(span, respBody)
 
 	start := time.Now()
@@ -160,6 +176,18 @@ func (g *Gateway) fail(w http.ResponseWriter, span trace.Span, err error) {
 	span.RecordError(err)
 	span.SetStatus(codes.Error, err.Error())
 	http.Error(w, err.Error(), http.StatusBadGateway)
+}
+
+// errorTypeFor keeps error.type LOW-CARDINALITY: a class, never a message.
+func errorTypeFor(status int) string {
+	switch {
+	case status >= 500:
+		return "upstream_5xx"
+	case status >= 400:
+		return "upstream_4xx"
+	default:
+		return ""
+	}
 }
 
 func msSince(t time.Time) float64 { return float64(time.Since(t).Microseconds()) / 1000.0 }

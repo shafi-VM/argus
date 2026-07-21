@@ -19,6 +19,9 @@ func TestCheck(t *testing.T) {
 		{"no context -> fail OPEN", "Flight UA99 departs SFO 06:00.", "", true, true, 0},
 		{"one supported one not", "Try AA42, or UA99 as backup.", ctx, false, false, 1},
 		{"repeat claim counted once", "UA99 then UA99 again.", ctx, false, false, 1},
+		// regression #25: substring matching wrongly accepted a prefix.
+		{"prefix must NOT satisfy a claim (#25)", "Flight AA42 departs.",
+			`{"results":[{"flight":"AA420"}]}`, false, false, 1},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {

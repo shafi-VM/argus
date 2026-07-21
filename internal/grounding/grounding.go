@@ -58,6 +58,14 @@ func Check(answer, ctx string) Result {
 		return Result{Grounded: true, Skipped: true}
 	}
 
+	// Entities are extracted from BOTH sides with the same pattern, so matching is
+	// word-boundary by construction: a claim of AA42 is NOT satisfied by a context
+	// containing AA420 (issue #25). A substring test would wrongly accept it.
+	supported := make(map[string]bool)
+	for _, e := range entityRe.FindAllString(ctx, -1) {
+		supported[e] = true
+	}
+
 	res := Result{Grounded: true}
 	seen := make(map[string]bool)
 	for _, claim := range entityRe.FindAllString(answer, -1) {
@@ -66,7 +74,7 @@ func Check(answer, ctx string) Result {
 		}
 		seen[claim] = true
 		res.Claims = append(res.Claims, claim)
-		if !strings.Contains(ctx, claim) {
+		if !supported[claim] {
 			res.Unsupported = append(res.Unsupported, claim)
 			res.Grounded = false
 		}
