@@ -48,13 +48,19 @@ class Handler(BaseHTTPRequestHandler):
         n = int(self.headers.get("Content-Length", 0))
         req = json.loads(self.rfile.read(n) or b"{}")
         model = req.get("model", "gpt-4o")
+        # argusd appends a REGROUND instruction when an answer failed the Grounding
+        # Check. A real model corrects itself when told its claim was unsupported;
+        # the replay engine simulates that, deterministically.
+        regrounded = any("REGROUND" in (m.get("content") or "")
+                         for m in req.get("messages", []))
+        mode = "grounded" if regrounded else MODE
         self._json(200, {
             "id": "chatcmpl-mock",
             "object": "chat.completion",
             "model": model,
             "choices": [{
                 "index": 0,
-                "message": {"role": "assistant", "content": RESPONSES[MODE]},
+                "message": {"role": "assistant", "content": RESPONSES[mode]},
                 "finish_reason": "stop",
             }],
             # wire-faithful: real OpenAI returns total_tokens too. argusd deliberately
