@@ -51,6 +51,26 @@ intelligence_health = clamp( grounding_rate − loop_penalty − cost_penalty , 
 Weights/caps are tunable; grounding is the primary driver, loops and cost are bounded penalties so no
 single component dominates. If a judge asks *"what is that number?"* — this is the answer.
 
+### Window mechanics — specified (gap found in review of #23)
+The formula alone is not enough: **where the window lives decides whether the hero number moves.**
+
+- **Window: rolling 30 seconds** of request outcomes. Chosen for demo cadence — drift fires at 2:00 and
+  the number must visibly dip by the LEARN beat at 2:30. **Lifetime counters would be sticky and would
+  NOT move** — that was the gap.
+- **Windowing happens in exactly ONE place: `argusd`.** It keeps time-bucketed counters
+  (6 × 5 s buckets, oldest evicted) and emits an **already-windowed** gauge — never a lifetime ratio.
+- **The hero panel plots the gauge RAW** — no second aggregation. The LEARN poller reads **the same
+  gauge** and thresholds it raw. One home for the window ⇒ panel and LEARN can never disagree, and
+  nothing is double-windowed.
+- **Warm-up:** with fewer than 3 requests in the window, hold the previous value (cold start `1.0`) so a
+  single request cannot slam the gauge to 0 or 1.
+- **Emission cadence: every 5 s**, so the line visibly moves on demo timescales.
+- **Anti-flap for LEARN:** quarantine when `intelligence_health < 0.5` across **2 consecutive windows**,
+  not on a single dip.
+
+`budget` in `cost_penalty` is a **configured constant** (`ARGUS_COST_BUDGET_USD`), **not** a metric —
+#10 must not go looking for an `argus_budget` series.
+
 ## Framing (marketing skin — sparingly, NEVER in code)
 "**Immune System for AI Agents**" is the *marketing* line; the immune metaphor (antibody,
 vaccination…) opens the door in a pitch. The engineering names above are canonical.
