@@ -76,8 +76,9 @@ blocks the exfil call.
 **💥 Wow:** security is observable **and** enforced.
 
 **4:00 — VACCINATION (chaos as a feature).** *[chaos]*
-Driver: **"Run Chaos Suite."** 20 faults fire in fast-forward; the dashboard flips green tile by tile as
-Argus survives each; an SLO/error-budget panel ends at 99.9%.
+Driver hits the **same chaos button** in fast succession — hallucination, then drift, then injection —
+and Argus catches each in turn; the dashboard flips back to green and an SLO/error-budget panel holds at 99.9%.
+*(One button, per KILL_LIST — no 20-fault suite; nobody counts to 20.)*
 > *"We don't wait for real incidents to find out if Ada survives. We inject them."*
 **💥 Wow:** it's not a demo, it's a reliability system.
 
