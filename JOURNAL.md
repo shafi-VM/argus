@@ -127,3 +127,13 @@ settled decisions.
 - **The mock LLM is deliberate, not a shortcut:** a deterministic upstream IS the demo's airplane-mode replay engine (DEMO_RISK). The real LLM key plugs in for grounding on Day 2. Chaos will make it return a wrong answer on cue.
 - **Architecture note:** argusd is a drop-in OpenAI-compatible proxy (agent points `base_url` at it) — framework-agnostic by construction, which is exactly the "works with any OTel-emitting agent" claim.
 - **Next (Day 2):** PREVENT — inline grounding check → block → re-ground → recover. The money moment.
+
+## Hackathon Day 2 — 2026-07-21 (PREVENT works)
+- **🟢 Day-2 GATE (#5 #6 #7 #8): the money moment is REAL.** With the mock lying on cue (chaos=`hallucinated` → cites `UA99`, absent from the retrieved context), Ada's caller still received the grounded answer (`AA42`). **The user never saw the hallucination.**
+- **Grounding Check measured at 0.138 ms** — budget was <50 ms, so **~360× under**. Portkey outsources the same groundedness check to a third-party API with a **15,000 ms** default timeout. That gap is now a *measured number*, not a claim. Lead with it.
+- **One waterfall, three levels:** `invoke_agent ada` (ada-agent) → `chat gpt-4o` (argusd, `decision=recovered`) → `argus.recovery.reground` (argusd). The incident narrates itself.
+- **Applied my own PR-review note on #22:** argusd grounds against the **in-band `RETRIEVED_CONTEXT` in the request**, never `fixtures/booking.json`. Corrected the misleading fixture comment. This is what keeps "drop-in proxy, works with any agent" honest instead of a demo trick.
+- **Fail-OPEN by design:** no context → skip the check, never block. A false block (refusing a *correct* answer) on stage is the one failure that would sink the demo. Unit-tested.
+- **Honest scope:** this is ENTITY-PRESENCE grounding (catches "cited something not in context"), which is exactly ADR-0002's stated non-goal boundary — not general hallucination detection. Say it that way on stage.
+- **Surprise:** Docker died overnight (machine restart) → the first e2e ran with **no telemetry**. Behavior was provable; telemetry wasn't. Did **not** call it green until the stack was back and the trace captured. Restart→OTLP-ready took ~9 s (vs ~2.5 min cold boot — migrations already done).
+- **Next (Day 3):** LEARN — windowed drift → quarantine/reroute, plus real `argus_*` metrics including the Intelligence Health composite defined in #21.
