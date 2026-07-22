@@ -140,6 +140,23 @@ func (g *Gateway) ChatCompletions(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// #25 (recovery leg): a non-2xx on the RE-GROUND retry must never read as a
+	// healthy "recovered". Its error body has no entities, so the Grounding Check
+	// would call it grounded. Mark it, and serve a safe refusal — never the raw
+	// upstream error, never a green span.
+	if rStatus >= 400 {
+		rspan.SetStatus(codes.Error, http.StatusText(rStatus))
+		rspan.SetAttributes(
+			attribute.String("error.type", errorTypeFor(rStatus)),
+			attribute.Int("argus.upstream.status", rStatus),
+		)
+		rspan.End()
+		span.SetStatus(codes.Error, http.StatusText(rStatus))
+		span.SetAttributes(attribute.String("argus.decision", "upstream_error"))
+		writeJSON(w, http.StatusOK, refusal(model))
+		return
+	}
+
 	rRes := grounding.Check(answerOf(rBody), provided)
 	rspan.SetAttributes(attribute.Bool("argus.recovery.grounded", rRes.Grounded))
 	rspan.End()
