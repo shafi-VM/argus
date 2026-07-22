@@ -91,6 +91,13 @@ func (w *Window) Record(grounded bool, loops int, costUSD float64) {
 // gauge to 0 or 1).
 //
 //	health = clamp(grounding_rate - loop_penalty - cost_penalty, 0, 1)
+//
+// NOTE (review #2): this is the composite the hero gauge shows, computed from LOCAL
+// in-process buckets. LEARN acts on a DIFFERENT number — the raw grounding rate read
+// back from SigNoz trace spans (learn.groundingRate) — which omits the loop/cost
+// penalties. The two agree only while those penalties are zero (loops=0, cost<budget,
+// the demo's steady state). If either penalty ever fires, "LEARN acts on the same
+// number you see" stops being literally true; state it with that caveat.
 func (w *Window) Score(coldValue float64) (float64, int) {
 	w.mu.Lock()
 	defer w.mu.Unlock()

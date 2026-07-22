@@ -59,7 +59,11 @@ func New(c Config) *Poller {
 		c.Interval = 2 * time.Second
 	}
 	if c.MaxAge == 0 {
-		c.MaxAge = 15 * time.Second
+		// Normal trace ingestion lag is ~13s; the query window (lookback) is 30s.
+		// MaxAge sits between them: hold when SigNoz falls >25s behind (genuine
+		// staleness) without spuriously holding on normal-lag jitter. This guard was
+		// inert while SigNoz.groundingRate hardcoded age=0 (review #1) — now live.
+		c.MaxAge = 25 * time.Second
 	}
 	if c.Governor == nil {
 		c.Governor = health.NewGovernor(0.5, 0.7, 2)
@@ -130,7 +134,9 @@ func (p *Poller) query(ctx context.Context) (float64, time.Duration, error) {
 	defer span.End()
 	span.SetAttributes(
 		attribute.String("db.system", "signoz"),
-		attribute.String("argus.metric", "argus_intelligence_health_ratio"),
+		// LEARN reads the windowed decision from TRACE spans (argus.decision), not the
+		// intelligence_health metric gauge — the trace signal is ~13s fresh vs ~60s.
+		attribute.String("argus.learn.source", "traces:argus.decision"),
 	)
 	v, age, err := p.client.LatestHealth(ctx)
 	if err != nil {
