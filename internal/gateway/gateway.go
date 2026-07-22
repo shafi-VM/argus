@@ -49,6 +49,49 @@ type Gateway struct {
 
 	mu      sync.RWMutex
 	reroute map[string]string // quarantined model -> fallback model
+
+	// Mission Control read-model (in-process, 0ms — ADR-0003: never a SigNoz read).
+	lastAction        string // last LEARN transition, "" until one happens
+	lastActionAt      time.Time
+	lastDecision      string // most recent PREVENT decision (pass/recovered/...)
+	lastDecisionModel string
+	lastDecisionAt    time.Time
+}
+
+// Snapshot is Mission Control's view of live Argus state — quarantines, the last
+// LEARN action, and the last PREVENT decision. Read from memory, never from SigNoz.
+type Snapshot struct {
+	Quarantined       map[string]string
+	LastAction        string
+	LastActionAt      time.Time
+	LastDecision      string
+	LastDecisionModel string
+	LastDecisionAt    time.Time
+}
+
+// MissionState returns an immutable snapshot of live state for the control surface.
+func (g *Gateway) MissionState() Snapshot {
+	g.mu.RLock()
+	defer g.mu.RUnlock()
+	q := make(map[string]string, len(g.reroute))
+	for k, v := range g.reroute {
+		q[k] = v
+	}
+	return Snapshot{
+		Quarantined: q, LastAction: g.lastAction, LastActionAt: g.lastActionAt,
+		LastDecision: g.lastDecision, LastDecisionModel: g.lastDecisionModel,
+		LastDecisionAt: g.lastDecisionAt,
+	}
+}
+
+// noteDecision records the most recent PREVENT outcome for Mission Control.
+func (g *Gateway) noteDecision(model, decision string) {
+	if decision == "" {
+		return
+	}
+	g.mu.Lock()
+	g.lastDecision, g.lastDecisionModel, g.lastDecisionAt = decision, model, time.Now()
+	g.mu.Unlock()
 }
 
 // New returns a Gateway forwarding to upstream (e.g. http://127.0.0.1:9099).
@@ -64,17 +107,27 @@ func New(upstream string) *Gateway {
 // SetMetrics attaches the argus_* emitter (from main, once telemetry is up).
 func (g *Gateway) SetMetrics(m *metrics.Metrics) { g.metrics = m }
 
-// Quarantine and Recover implement learn.Actuator. Both are idempotent.
+// Quarantine and Recover implement learn.Actuator. Both are idempotent: a repeat
+// call is a no-op, so the recorded "last action" reflects a real transition only
+// (its timestamp does not reset while the poller re-affirms an existing quarantine).
 func (g *Gateway) Quarantine(model, fallback string) {
 	g.mu.Lock()
 	defer g.mu.Unlock()
+	if g.reroute[model] == fallback {
+		return
+	}
 	g.reroute[model] = fallback
+	g.lastAction, g.lastActionAt = "Quarantined "+model+" → "+fallback, time.Now()
 }
 
 func (g *Gateway) Recover(model string) {
 	g.mu.Lock()
 	defer g.mu.Unlock()
+	if _, ok := g.reroute[model]; !ok {
+		return
+	}
 	delete(g.reroute, model)
+	g.lastAction, g.lastActionAt = "Recovered "+model, time.Now()
 }
 
 func (g *Gateway) fallbackFor(model string) (string, bool) {
@@ -129,6 +182,7 @@ func (g *Gateway) ChatCompletions(w http.ResponseWriter, r *http.Request) {
 	)
 	defer func() {
 		g.metrics.Record(model, decision, statusClass, primaryGrounded, behavioral, costUSD)
+		g.noteDecision(model, decision)
 	}()
 
 	// The context we ground against travels IN the request. argusd never reads a

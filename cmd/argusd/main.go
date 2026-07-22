@@ -13,6 +13,7 @@ import (
 	"github.com/shafi-VM/argus/internal/health"
 	"github.com/shafi-VM/argus/internal/learn"
 	"github.com/shafi-VM/argus/internal/metrics"
+	"github.com/shafi-VM/argus/internal/mission"
 	"github.com/shafi-VM/argus/internal/telemetry"
 )
 
@@ -54,7 +55,7 @@ func main() {
 			Interval: 2 * time.Second,
 		})
 		go poller.Run(ctx)
-		log.Printf("LEARN poller on: reading argus_intelligence_health_ratio from %s", url)
+		log.Printf("LEARN poller on: reading windowed decision from SigNoz query_range at %s", url)
 	} else {
 		log.Printf("LEARN poller off (set SIGNOZ_URL + SIGNOZ_API_KEY to enable)")
 	}
@@ -63,7 +64,13 @@ func main() {
 	mux.HandleFunc("POST /v1/chat/completions", gw.ChatCompletions)
 	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, _ *http.Request) { _, _ = w.Write([]byte("ok")) })
 
+	// Mission Control: the demo god-mode surface. Reads live state from the gateway
+	// (in-process, ADR-0003) and drives ONE control — inject/stop drift. The chaos
+	// target defaults to the upstream, which IS the replay engine in the demo.
+	mission.New(gw, getenv("ARGUS_CHAOS_URL", upstream)).Register(mux)
+
 	addr := getenv("ARGUS_ADDR", ":8088")
+	log.Printf("Mission Control at http://localhost%s/mission", addr)
 	log.Printf("argusd listening on %s -> upstream %s", addr, upstream)
 	if err := http.ListenAndServe(addr, mux); err != nil {
 		log.Fatal(err)
