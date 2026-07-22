@@ -2,61 +2,58 @@ package learn
 
 import (
 	"context"
-	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
-	"time"
 )
 
-func TestSigNozLatestHealthPicksNewestPoint(t *testing.T) {
-	now := time.Unix(2_000_000, 0)
-	tsNew := now.Add(-4 * time.Second).UnixMilli()
-	tsOld := now.Add(-40 * time.Second).UnixMilli()
+// REAL v5 scalar shape: rows are ARRAYS aligned to `columns`, not objects.
+// pass=2, recovered=6, refused=1, upstream_error=5. There is also an empty-decision
+// group (non-chat spans) that must be ignored. grounding rate = 2/(2+6+1)=0.222, and
+// upstream_error must NOT dilute it (R2).
+const traceGroups = `{"data":{"data":{"results":[{` +
+	`"columns":[{"name":"argus.decision","columnType":"group"},{"name":"__result_0","columnType":"aggregation"}],` +
+	`"data":[[null,99],["pass",2],["recovered",6],["refused",1],["upstream_error",5]]}]}}}`
 
+func TestSigNozGroundingRateFromTraces(t *testing.T) {
 	var gotKey, gotBody string
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		gotKey = r.Header.Get("SIGNOZ-API-KEY")
 		b, _ := io.ReadAll(r.Body)
 		gotBody = string(b)
-		// two points; newest (tsNew) has value 0.12, older has 0.90
-		resp := fmt.Sprintf(`{"data":{"data":{"results":[{"aggregations":[{"series":[{"values":[`+
-			`{"timestamp":%d,"value":0.90},{"timestamp":%d,"value":0.12}]}]}]}]}}}`, tsOld, tsNew)
-		_, _ = w.Write([]byte(resp))
+		_, _ = w.Write([]byte(traceGroups))
 	}))
 	defer srv.Close()
 
-	s := NewSigNoz(srv.URL, "secret-key", "argus_intelligence_health_ratio")
-	s.now = func() time.Time { return now }
-
+	s := NewSigNoz(srv.URL, "secret-key")
 	val, age, err := s.LatestHealth(context.Background())
 	if err != nil {
 		t.Fatalf("err = %v", err)
 	}
-	if val != 0.12 {
-		t.Errorf("value = %v, want newest 0.12", val)
+	if val < 0.221 || val > 0.223 {
+		t.Errorf("grounding rate = %v, want 0.222 (2/9, upstream_error excluded)", val)
 	}
-	if age < 3*time.Second || age > 5*time.Second {
-		t.Errorf("age = %v, want ~4s", age)
+	if age != 0 {
+		t.Errorf("age = %v, want 0 (traces fresh by window)", age)
 	}
 	if gotKey != "secret-key" {
-		t.Errorf("SIGNOZ-API-KEY = %q, want secret-key", gotKey)
+		t.Errorf("SIGNOZ-API-KEY = %q", gotKey)
 	}
-	if !strings.Contains(gotBody, "argus_intelligence_health_ratio") ||
-		!strings.Contains(gotBody, `"signal":"metrics"`) {
-		t.Errorf("query body missing metric/signal: %s", gotBody)
+	if !strings.Contains(gotBody, `"signal":"traces"`) || !strings.Contains(gotBody, "argus.decision") {
+		t.Errorf("query not a trace group-by: %s", gotBody)
 	}
 }
 
-func TestSigNozNoDataIsAnError(t *testing.T) {
+func TestSigNozTooFewSamplesHolds(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		_, _ = w.Write([]byte(`{"data":{"data":{"results":[]}}}`))
+		_, _ = w.Write([]byte(`{"data":{"data":{"results":[{"data":[` +
+			`{"argus.decision":"pass","__result_0":1}]}]}}}`)) // 1 < minSamples
 	}))
 	defer srv.Close()
-	s := NewSigNoz(srv.URL, "", "argus_intelligence_health_ratio")
+	s := NewSigNoz(srv.URL, "")
 	if _, _, err := s.LatestHealth(context.Background()); err == nil {
-		t.Error("empty results should error (no data to act on), got nil")
+		t.Error("too few samples should error (warm-up hold), got nil")
 	}
 }
