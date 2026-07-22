@@ -53,7 +53,14 @@ class Handler(BaseHTTPRequestHandler):
         # the replay engine simulates that, deterministically.
         regrounded = any("REGROUND" in (m.get("content") or "")
                          for m in req.get("messages", []))
-        mode = "grounded" if regrounded else MODE
+        # Drift is model-scoped: only the PRIMARY model (gpt-4o) degrades under chaos.
+        # The fallback (anything else, e.g. gpt-4o-mini) is always healthy — so when
+        # LEARN quarantines gpt-4o and reroutes to the fallback, health recovers.
+        primary = os.getenv("MOCK_PRIMARY_MODEL", "gpt-4o")
+        if regrounded or model != primary:
+            mode = "grounded"
+        else:
+            mode = MODE
         self._json(200, {
             "id": "chatcmpl-mock",
             "object": "chat.completion",
