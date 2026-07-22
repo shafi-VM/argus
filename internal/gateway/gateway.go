@@ -88,6 +88,22 @@ func (g *Gateway) ChatCompletions(w http.ResponseWriter, r *http.Request) {
 		g.fail(w, span, err)
 		return
 	}
+
+	// #25: an upstream non-2xx must NEVER read as a healthy, grounded pass. An error
+	// body carries no entity claims, so the Grounding Check would happily call it
+	// "grounded" and leave the span UNSET (= success). Mark it, skip the check, and
+	// pass the status through unchanged. Telemetry correctness is product correctness.
+	if status >= 400 {
+		span.SetStatus(codes.Error, http.StatusText(status))
+		span.SetAttributes(
+			attribute.String("error.type", errorTypeFor(status)),
+			attribute.Int("argus.upstream.status", status),
+			attribute.String("argus.decision", "upstream_error"),
+		)
+		writeJSON(w, status, respBody)
+		return
+	}
+
 	recordUsage(span, respBody)
 
 	start := time.Now()
@@ -120,6 +136,23 @@ func (g *Gateway) ChatCompletions(w http.ResponseWriter, r *http.Request) {
 		rspan.SetStatus(codes.Error, rErr.Error())
 		rspan.End()
 		span.SetAttributes(attribute.String("argus.decision", "refused"))
+		writeJSON(w, http.StatusOK, refusal(model))
+		return
+	}
+
+	// #25 (recovery leg): a non-2xx on the RE-GROUND retry must never read as a
+	// healthy "recovered". Its error body has no entities, so the Grounding Check
+	// would call it grounded. Mark it, and serve a safe refusal — never the raw
+	// upstream error, never a green span.
+	if rStatus >= 400 {
+		rspan.SetStatus(codes.Error, http.StatusText(rStatus))
+		rspan.SetAttributes(
+			attribute.String("error.type", errorTypeFor(rStatus)),
+			attribute.Int("argus.upstream.status", rStatus),
+		)
+		rspan.End()
+		span.SetStatus(codes.Error, http.StatusText(rStatus))
+		span.SetAttributes(attribute.String("argus.decision", "upstream_error"))
 		writeJSON(w, http.StatusOK, refusal(model))
 		return
 	}
@@ -160,6 +193,18 @@ func (g *Gateway) fail(w http.ResponseWriter, span trace.Span, err error) {
 	span.RecordError(err)
 	span.SetStatus(codes.Error, err.Error())
 	http.Error(w, err.Error(), http.StatusBadGateway)
+}
+
+// errorTypeFor keeps error.type LOW-CARDINALITY: a class, never a message.
+func errorTypeFor(status int) string {
+	switch {
+	case status >= 500:
+		return "upstream_5xx"
+	case status >= 400:
+		return "upstream_4xx"
+	default:
+		return ""
+	}
 }
 
 func msSince(t time.Time) float64 { return float64(time.Since(t).Microseconds()) / 1000.0 }
