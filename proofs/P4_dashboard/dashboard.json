@@ -72,6 +72,24 @@
       "w": 6,
       "x": 6,
       "y": 16
+    },
+    {
+      "h": 6,
+      "i": "44da2515-28b8-4343-8ca1-58643c032d13",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 0,
+      "y": 22
+    },
+    {
+      "h": 6,
+      "i": "0176c3bc-e0d5-4618-adf2-fbd233ace1cb",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 6,
+      "y": 22
     }
   ],
   "panelMap": {},
@@ -560,6 +578,159 @@
       },
       "timePreferance": "GLOBAL_TIME",
       "title": "Recoveries (rate)",
+      "yAxisUnit": ""
+    },
+    {
+      "description": "",
+      "id": "44da2515-28b8-4343-8ca1-58643c032d13",
+      "isStacked": true,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregations": [
+                {
+                  "expression": "count()"
+                }
+              ],
+              "dataSource": "traces",
+              "disabled": false,
+              "expression": "A",
+              "filter": {
+                "expression": "name = 'chat gpt-4o' OR name = 'chat gpt-4o-mini'"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "fieldContext": "span",
+                  "name": "argus.decision"
+                }
+              ],
+              "having": {
+                "expression": ""
+              },
+              "legend": "{{argus.decision}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "stepInterval": 30
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "4647eba2-0c91-446d-aa38-525d9b58eeb1",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder"
+      },
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Decisions over time [traces]",
+      "yAxisUnit": ""
+    },
+    {
+      "description": "",
+      "id": "0176c3bc-e0d5-4618-adf2-fbd233ace1cb",
+      "isStacked": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregations": [
+                {
+                  "expression": "count()"
+                }
+              ],
+              "dataSource": "traces",
+              "disabled": false,
+              "expression": "A",
+              "filter": {
+                "expression": "(name = 'chat gpt-4o' OR name = 'chat gpt-4o-mini') AND argus.decision = 'pass'"
+              },
+              "functions": [],
+              "groupBy": [],
+              "having": {
+                "expression": ""
+              },
+              "legend": "pass",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "stepInterval": 30
+            },
+            {
+              "aggregations": [
+                {
+                  "expression": "count()"
+                }
+              ],
+              "dataSource": "traces",
+              "disabled": true,
+              "expression": "B",
+              "filter": {
+                "expression": "(name = 'chat gpt-4o' OR name = 'chat gpt-4o-mini') AND (argus.decision = 'pass' OR argus.decision = 'recovered' OR argus.decision = 'refused')"
+              },
+              "functions": [],
+              "groupBy": [],
+              "having": {
+                "expression": ""
+              },
+              "legend": "behavioral",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "B",
+              "stepInterval": 30
+            }
+          ],
+          "queryFormulas": [
+            {
+              "disabled": false,
+              "expression": "A/B",
+              "legend": "grounding rate",
+              "queryName": "F1"
+            }
+          ]
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "ae891177-8926-4cdc-8c4e-f11196a89055",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder"
+      },
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Intelligence Health \u2014 live [traces]",
       "yAxisUnit": ""
     }
   ]
