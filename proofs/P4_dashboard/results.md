@@ -27,4 +27,17 @@ Built **as code** via the SigNoz API (`build_dashboard.py`) — no manual clicki
 
 Verified every panel against `/api/v5/query_range` (real values: infra=1.0, intelligence 0.85→0.26, grounding ~0.67/min). Clean re-importable JSON vendored to `dashboard.json`.
 
-**Unlocks:** the **v5 metric query** is the LEARN read path (~85ms server) — nails the P1 follow-up. Metric contract (`argus_*`, low-cardinality labels) locked. Visual screenshot = final pitch tick (pending).
+**Unlocks:** the **v5 query API** is the LEARN read path. Metric contract (`argus_*`, low-cardinality labels) locked. Visual screenshot = final pitch tick (pending).
+
+> ⚠️ Correction (see Day-4 note): server *latency* is ~85ms, but query *freshness* is not. Measured 2026-07-22: metric `query_range` lags ~60s behind ingest; trace `query_range` ~13s. LEARN therefore reads the **trace** decision signal, not the metric gauge (`internal/learn/signoz.go`). The ~85ms figure was latency-not-freshness — the exact assumption this proof re-tested.
+
+## DAY 4 — fast (trace-derived) moving panels 🟢 — 2026-07-22
+The original 8 panels are all `dataSource:metrics`. Fine for the **flat** infra gauge (a constant line looks identical lagged), fatal for the **moving** intelligence signal in a live 5-min demo (~60s lag ⇒ fall/recover shows a minute late). `add_trace_panels.py` appends two `dataSource:traces` panels reading `argus.decision` spans (~13s fresh — the same signal LEARN's loop reads, so dashboard and loop agree):
+
+- **Decisions over time** — `count()` grouped by `argus.decision`, stacked. The money visual: green `pass` bars displaced by amber `recovered` under drift, then returning. No formula (highest confidence).
+- **Intelligence Health — live** — formula `A/B` = `pass / (pass+recovered+refused)`; `upstream_error`/`transport_error` excluded (red-team R2). The fast twin of the laggy metric gauge.
+
+Both stored in canonical **v5 builder** shape (SigNoz normalized the POST) and verified render-correct against `/api/v5/query_range`: grouped query returns `[recovered, pass]` series; formula legs `pass=61, behavioral=499 → 0.122`. Idempotent (replaces panels tagged `[traces]`); vendors the full metrics+traces dashboard back to `dashboard.json`.
+
+**Retires:** the #1 demo-freshness risk — the hero screen now shows infra flat-green beside intelligence moving live, at trace speed. Run after `build_dashboard.py`:
+`SIGNOZ_URL=… SIGNOZ_API_KEY=… python add_trace_panels.py`
