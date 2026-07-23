@@ -4,6 +4,8 @@ package telemetry
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/hex"
 	"os"
 	"time"
 
@@ -17,6 +19,33 @@ import (
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 )
 
+// instanceID is one stable id for this process, shared by the trace and metric
+// resources so SigNoz correlates their signals to the same argusd instance
+// (service.instance.id, per OTel resource semconv).
+var instanceID = newInstanceID()
+
+func newInstanceID() string {
+	b := make([]byte, 16)
+	if _, err := rand.Read(b); err != nil {
+		return "argusd-unknown"
+	}
+	return hex.EncodeToString(b)
+}
+
+// newResource builds the OTel Resource shared by traces and metrics. A complete,
+// identical resource on both signals is what a SigNoz engineer looks for first:
+// service.name/version, a per-instance id, and a low-cardinality environment.
+func newResource(ctx context.Context, serviceName string) (*resource.Resource, error) {
+	return resource.New(ctx,
+		resource.WithTelemetrySDK(), // telemetry.sdk.{name,language,version}
+		resource.WithAttributes(
+			attribute.String("service.name", serviceName),
+			attribute.String("service.version", "0.1.0"),
+			attribute.String("service.instance.id", instanceID),
+			attribute.String("deployment.environment.name", getenv("ARGUS_ENV", "demo")),
+		))
+}
+
 // Init configures the global tracer provider + propagator. Returns a shutdown func.
 func Init(ctx context.Context, serviceName string) (func(context.Context) error, error) {
 	exp, err := otlptracegrpc.New(ctx,
@@ -27,10 +56,7 @@ func Init(ctx context.Context, serviceName string) (func(context.Context) error,
 		return nil, err
 	}
 
-	res, err := resource.New(ctx, resource.WithAttributes(
-		attribute.String("service.name", serviceName),
-		attribute.String("service.version", "0.1.0"),
-	))
+	res, err := newResource(ctx, serviceName)
 	if err != nil {
 		return nil, err
 	}
@@ -57,10 +83,7 @@ func InitMetrics(ctx context.Context, serviceName string) (func(context.Context)
 	if err != nil {
 		return nil, err
 	}
-	res, err := resource.New(ctx, resource.WithAttributes(
-		attribute.String("service.name", serviceName),
-		attribute.String("service.version", "0.1.0"),
-	))
+	res, err := newResource(ctx, serviceName)
 	if err != nil {
 		return nil, err
 	}

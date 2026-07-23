@@ -5,13 +5,11 @@
 This is a SigNoz hackathon. Instrumentation *craft* is worth real judging points. Grade ourselves
 as if a SigNoz maintainer is reviewing our telemetry.
 
-**STATUS: 🔴 PENDING — checklist WRITTEN (2026-07-17), zero boxes ticked.**
-Every box below requires looking at telemetry that does not exist yet. Ticking any of them before
-`argusd` emits a real span would be fabricating a proof. The checklist is the *deliverable* of the
-pre-hackathon window; the ticks are the deliverable of the build.
-
-> **Pre-hackathon rule (Jul 17→20):** *"coding and design work should begin only after the hackathon
-> starts."* Writing this checklist = notes. Ticking it = instrumenting. Do not cross that line.
+**STATUS: 🟡 EMIT-SIDE PASS (2026-07-23, #16) — graded against real telemetry; 2 SigNoz-UI items pending the demo box.**
+Every emit-side box is ticked against actual emitted spans/metrics (see Grading + Evidence below),
+after fixing two tells (missing resource attrs; Ada Simple→Batch). Two boxes need the live SigNoz UI
+(service map, metric→trace click-through) and are honestly left open, not fake-ticked. P8 → 🟢 on the
+demo box when those two views are confirmed.
 
 ---
 
@@ -42,80 +40,92 @@ It is the cheapest credibility we can buy in this proof.
 
 ---
 
-## Checklist
+## Grading — 2026-07-23 (#16), against REAL emitted telemetry
+
+Method: drove every gateway decision path (pass / recovered / refused / upstream_error) through
+an in-memory OTel `SpanRecorder` + `ManualReader` and asserted the actual spans, attributes, and
+metrics; verified the resource by constructing it and reading its attributes. **This is emitted
+telemetry, not code-reading — and it is now committed and regression-guarded**, not a throwaway:
+- `internal/gateway/telemetry_semconv_test.go` — span names/kinds, `gen_ai.*` attrs, tokens (input/output,
+  no total), status codes, `error.type`, and the low-cardinality metric-label sets.
+- `internal/telemetry/resource_test.go` — the complete resource + shared `service.instance.id`.
+Break any of these tomorrow (e.g. the token mapping) and the tick goes red with the test.
+
+- **✅ ticked** = proven from emitted telemetry on this machine.
+- **🖥️ demo-box** = correct on the emit side, but the *confirmation* is a SigNoz-UI view (service
+  map, metric→trace click-through) that needs the live demo stack. **Not fake-ticked.**
+- **➖ N/A** = does not apply to what argusd emits by design (we emit `argus_*` behavioral metrics,
+  not `gen_ai.client.*` histograms; we capture no message content).
 
 ### Identity & naming
-- [ ] **`gen_ai.provider.name`** used — **NOT `gen_ai.system`**, which was *removed* (renamed in core
-      v1.37.0, PR #2046). Zero occurrences remain in the registry. Using it is the #1 stale-copy tell.
-- [ ] **`gen_ai.operation.name`** set from the 17-value enum (`chat`, `invoke_agent`, `execute_tool`, …)
-- [ ] **Span names** follow the spec formula, not our imagination:
-      - inference → `{gen_ai.operation.name} {gen_ai.request.model}` → **`chat gpt-4o`** (not `gpt-4o`, not `handler_1`)
-      - tool → **`execute_tool {gen_ai.tool.name}`**
-      - agent → **`invoke_agent {gen_ai.agent.name}`**
-- [ ] **Span kind** is correct — the #1 agent-instrumentation tell. The discriminator is *whether a
-      process boundary is actually crossed*:
-      - Go gateway → LLM provider = **`CLIENT`**
-      - Python agent, in-process = **`INTERNAL`**
-      - `execute_tool` = **`INTERNAL`**
-- [ ] **Argus-native spans keep `argus.*` names** (`argus.recovery.reground`) — they are not GenAI
-      operations and must NOT be forced into the `gen_ai.*` span taxonomy. See the reconciliation
-      note below.
+- [x] **`gen_ai.provider.name = openai`** used — **NOT** the removed `gen_ai.system` (grepped: zero occurrences).
+- [x] **`gen_ai.operation.name`** from the enum — `chat` (gateway), `invoke_agent` (Ada).
+- [x] **Span names** follow the spec formula: **`chat gpt-4o`** and **`invoke_agent ada`**.
+      ➖ tool span (`execute_tool {tool}`) N/A — the demo agent makes no tool calls, so no tool spans exist.
+- [x] **Span kind** correct: gateway→LLM = **`CLIENT`**, `argus.recovery.reground` = **`INTERNAL`**,
+      Ada in-process = **`INTERNAL`**. (execute_tool N/A.)
+- [x] **Argus-native spans keep `argus.*` names** — `argus.recovery.reground`, not forced into `gen_ai.*`.
 
 ### Tokens & response
-- [ ] **`gen_ai.usage.input_tokens` / `.output_tokens`** — NOT `prompt_tokens`/`completion_tokens`
-      (renamed in core v1.27.0; ~2 years stale; zero occurrences remain)
-- [ ] **No `gen_ai.usage.total_tokens`** — it does not exist in the spec. Emitting it is a tell.
-      Derive it at query time.
-- [ ] **`gen_ai.response.finish_reasons` is a string ARRAY**, not a scalar (common bug)
-- [ ] Billable tokens reported when available (spec: MUST, when both available)
+- [x] **`gen_ai.usage.input_tokens` / `.output_tokens`** — confirmed in the dump; NOT prompt/completion.
+- [x] **No `gen_ai.usage.total_tokens`** — confirmed absent from span attrs (mock returns it on the wire; gateway drops it).
+- [x] Billable tokens reported when the usage block is present (input + output both emitted).
+- ➖ **`gen_ai.response.finish_reasons`** — argusd emits no response.* attrs. Absence of an optional attr
+      is not a tell; if we later add it, it MUST be a string array. Left as a build-time note.
 
 ### Metrics
-- [ ] **All 12 GenAI metrics are Histograms.** There are no Counters/UpDownCounters in GenAI semconv.
-- [ ] **Explicit spec bucket boundaries set** (not SDK defaults) — cheap, visible competence signal:
-      - `gen_ai.client.token.usage` `{token}`: `[1,4,16,64,256,1024,4096,16384,65536,262144,1048576,4194304,16777216,67108864]`
-      - `gen_ai.client.operation.duration` `s`: `[0.01,0.02,0.04,0.08,0.16,0.32,0.64,1.28,2.56,5.12,10.24,20.48,40.96,81.92]`
-- [ ] **`gen_ai.token.type` ∈ {`input`,`output`} ONLY** — NOT `prompt`/`completion`
-- [ ] **Zero high-cardinality labels on metrics.** Spec: *"Metric attributes that may have high
-      cardinality can only be defined with `Opt-In` level."* Never `conversation.id`, `response.id`,
-      user IDs, or prompt text. (This is already CLAUDE.md law — the spec agrees with us.)
-- [ ] **Metric temporality** correct (no double-counting; Delta→vanilla-Prometheus silently breaks
-      counters). ⚠️ *GenAI semconv does NOT specify temporality* — it's SDK/exporter territory. Do not
-      claim the spec mandates it.
-- [ ] **`argus_*` metrics** (our own contract, locked in P4) stay `argus_*` — they measure Argus, not
-      a GenAI operation. Do not rename them into `gen_ai.*`.
+- [x] **Zero high-cardinality labels.** `argus_requests_total{model,decision,status_class}`,
+      `argus_grounded_total{model}`, `argus_intelligence_health_ratio{}` — all low-cardinality; no
+      prompt/user/trace/request id on any metric. (CLAUDE.md law; verified in the dump.)
+- [x] **Instrument types correct** — the two `argus_*_total` are monotonic **Sums** (counters),
+      Intelligence Health is an **observable Gauge**. No double-counting; no counter-as-gauge.
+      ⚠️ **`model` label is caller-supplied** (the request's `model` field) — bounded by our
+      primary/fallback convention (`gpt-4o`/`gpt-4o-mini`), so low-cardinality in practice. A
+      malicious/misconfigured caller could inflate it; acceptable for the demo, worth an allowlist later.
+- [x] **`argus_*` metrics stay `argus_*`** — behavioral metrics, not renamed into `gen_ai.*`.
+- ➖ **GenAI client metrics** (12 histograms, spec buckets, `gen_ai.token.type`) N/A **by design**:
+      argusd emits *behavioral* metrics about Argus decisions, not raw LLM-client token/duration
+      histograms. Those would come from instrumenting the LLM client — a possible enhancement, not
+      required for "do they get OTel." Flagged, not faked.
+- ⚠️ **Temporality**: cumulative Sums (OTLP default) — fine for SigNoz/ClickHouse. GenAI semconv does
+      not specify temporality; we do not claim it does.
 
 ### Content & privacy
-- [ ] **Content capture OFF by default** — off at all three layers (spec text, `Opt-In` level,
-      `NO_CONTENT` default). Every content attr carries a PII warning.
-- [ ] **`gen_ai.input.messages` / `gen_ai.output.messages` / `gen_ai.system_instructions`** used when
-      opted in — NOT the flat `gen_ai.prompt.{i}.content` style (that's OpenLLMetry's, **never** official OTel)
-- [ ] **JSON-serialized on spans** — structured span attributes are blocked on OTEP #4485; spec says
-      serialize to JSON string on spans, structured form on events. *Knowing why is a strong signal.*
-- [ ] **The opt-in coupling** understood: `OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT` +
-      `OTEL_SEMCONV_STABILITY_OPT_IN=gen_ai_latest_experimental`. **Without the latter, Python GenAI
-      instrumentation pins to `Schemas.V1_26_0`** — the 2024-era span-event design — and
-      `get_content_capturing_mode()` raises. Huge, non-obvious gotcha.
-      ⚠️ **Env var names verified for PYTHON ONLY.** Go naming unverified → verify at build time.
-- [ ] **`gen_ai.conversation.id` never fabricated.** Spec verbatim: *"a new UUID, a trace identifier,
-      or a hash of request content SHOULD NOT be used as a fallback value."* Classic tell.
+- [x] **Content capture OFF** — argusd/Ada emit **no** message-content attrs at all (verified absent).
+      Compliant with the spec default (`NO_CONTENT`) by construction.
+- [x] **No `gen_ai.conversation.id` fabricated** — we don't emit it, so no UUID/trace-id/hash fallback tell.
+- ➖ **`gen_ai.input.messages` / opt-in coupling** N/A — no content-capture path exists (off by default is
+      the whole point). If one is ever added, use `input.messages`/`output.messages` (not the OpenLLMetry
+      flat style), JSON-serialized on spans (OTEP #4485), gated on
+      `OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT` + `OTEL_SEMCONV_STABILITY_OPT_IN=gen_ai_latest_experimental`.
 
 ### Resource & errors
-- [ ] **Resource attrs set**: `service.name`, `service.version`, `service.instance.id`,
-      **`deployment.environment.name`** (⚠️ renamed from `deployment.environment`; now Stable)
-- [ ] **No `unknown_service`** anywhere — instant tell
-- [ ] **Span status left UNSET on success.** Spec: *"MUST be left unset if the instrumented operation
-      has ended without any errors."* Do not set `Ok`.
-- [ ] **`error.type` is low-cardinality** — an identifier, not a raw exception message. Success
-      metrics SHOULD NOT carry `error.type`.
-- [ ] **BatchSpanProcessor**, not SimpleSpanProcessor (blocking export per `span.end()`)
+- [x] **Resource attrs complete** — `service.name`, `service.version`, **`service.instance.id`** (128-bit,
+      shared by trace+metric providers), **`deployment.environment.name=demo`**. *Fixed in this PR — the
+      last two were missing.* Verified by constructing the resource and reading its attributes.
+- [x] **No `unknown_service`** — `service.name` set to `argusd` / `ada-agent`.
+- [x] **Span status UNSET on success** — `pass` and `recovered` spans have status `Unset` (not `Ok`).
+- [x] **`error.type` low-cardinality** — `upstream_5xx` / `upstream_4xx` (a class, not a message) on the
+      error span; success spans carry none.
+- [x] **BatchSpanProcessor** — Go uses `WithBatcher`; **Ada switched Simple→Batch in this PR** (it
+      `force_flush`es before exit, so batching loses nothing and matches production shape).
 
 ### Argus-specific
-- [ ] **Metric → trace → logs** click-through works in SigNoz (exemplars / correlation)
-- [ ] **Service boundaries** obvious (gateway ≠ agent ≠ recovery as distinct services)
-- [ ] **Service map** tells the story on its own (gateway → LLM → tools → argus)
-- [ ] **Exceptions** — bad responses surface as span events/exceptions, browsable in SigNoz
-- [ ] **Recovery is trace-linked** (P3 🟢) so one trace narrates the whole incident
-- [ ] **No orphan spans** across the Go↔Python boundary
+- [x] **Recovery is trace-linked** (P3 🟢, re-confirmed live) — `argus.recovery.reground` is a child span
+      in the same trace; one waterfall narrates the incident.
+- [x] **Behavioral events surface as span events** — a blocked answer emits `argus.behavior.blocked`
+      (with the unsupported entities); transport failures `RecordError`; upstream 5xx set status + `error.type`.
+- [x] **Service boundaries obvious** — two services (`ada-agent`, `argusd`); recovery is correctly a
+      *child span within* argusd, not a bogus third service.
+- [x] **No orphan spans across Go↔Python** — traceparent injected by Ada, extracted by argusd; verified
+      end-to-end in the live smoke (one linked trace, correct parenting).
+- [ ] 🖥️ **Metric → trace click-through (exemplars)** — **was structurally impossible** (metrics were
+      recorded on `context.Background()` → no span context → no exemplars could ever emit). **Fixed in
+      this PR:** `Record` now takes the request `ctx` carrying the chat span, so counter increments are
+      exemplar-capable. Whether SigNoz *renders* the exemplar is the remaining UI confirmation → demo box.
+- [ ] 🖥️ **Service map tells the story** — topology is **`ada-agent → argusd`** (recovery is an INTERNAL
+      span *inside* argusd, NOT a third node). Emit side is correct (two services, linked trace); the map
+      itself is a SigNoz view → confirm on the demo box.
 
 ## The Go↔Python seam (our specific risk)
 Argus is Go gateway + Python agent. **W3C traceparent must propagate across that boundary** or the
@@ -126,15 +136,10 @@ Specific breakages to test for:
 - Go: raw `net/http` not wrapped with `otelhttp` → no propagation
 - Python: `ProcessPoolExecutor` / manual threads do **not** inherit context (asyncio `contextvars` do)
 
-## ⚠️ Reconciliation debt from P3 (found 2026-07-17, decide at build time)
-P3 went 🟢 with spans named **`agent.request`** and **`argus.recovery.reground`** — chosen before this
-semconv review existed. They are not wrong, but they need a *decision*, not a drift:
-
-- `argus.recovery.reground` → **keep**. It's an Argus action, not a GenAI operation. No spec name fits.
-- `agent.request` → **probably rename to `invoke_agent {gen_ai.agent.name}`**, which IS a spec
-  operation. Leaving it as `agent.request` is the kind of thing a maintainer notices.
-
-This does not invalidate P3 (it proved *parenting*, not naming). Log the decision in DECISIONS.md.
+## ✅ Reconciliation debt from P3 — RESOLVED (2026-07-23)
+The Day-1 spine already fixed the naming flagged here: Ada emits **`invoke_agent ada`** (a real spec
+operation) and the gateway emits **`chat gpt-4o`**; the old `agent.request` name is gone.
+`argus.recovery.reground` was kept (an Argus action, no spec name fits). No debt remaining.
 
 ## What SigNoz actually does with this today — the honest answer
 **Nothing lights up automatically.** Emitting perfect GenAI semconv gets us generic trace/metric/log
@@ -152,9 +157,30 @@ exploration where `gen_ai.*` is filterable like any attribute, plus manually-imp
 
 Accurate, *and* it shows we read their PRs — which is worth more than either.
 
-## Verdict
-- All boxes checked → ☐ PASS / ☐ FAIL — **not yet attempted; no telemetry exists**
-- A SigNoz maintainer would nod → ☐ yes / ☐ not yet
+## Verdict — 🟡 emit-side PASS; two UI confirmations pending the demo box
+- **Every emit-side box is ✅** against real telemetry, after fixing the two tells found (missing
+  `service.instance.id` + `deployment.environment.name`; Ada `Simple`→`Batch`). N/A items are N/A
+  **by design** and stated as such.
+- **Two boxes stay open (🖥️)** — metric→trace click-through and the service map are SigNoz-UI
+  confirmations, not emittable facts; they need the live demo stack. **We did not fake-tick them.**
+- **So P8 is 🟡, not 🟢.** It goes 🟢 the first time we open the running SigNoz on the demo laptop and
+  confirm those two views (a ~5-minute step during the Day-6 install / rehearsal). A SigNoz engineer
+  reading our *spans* today would nod: correct semconv, complete resource, honest scope.
+
+## Evidence — captured spans + metrics (2026-07-23, in-memory OTel recorder)
+```
+SPAN "chat gpt-4o"             kind=client   status=Unset   decision=pass
+     gen_ai.provider.name=openai  gen_ai.operation.name=chat  gen_ai.request.model=gpt-4o
+     gen_ai.usage.input_tokens=9  gen_ai.usage.output_tokens=5   (no total_tokens)
+SPAN "argus.recovery.reground" kind=internal status=Unset   recovery.grounded=true
+SPAN "chat gpt-4o"             kind=client   status=Error   decision=upstream_error
+     error.type=upstream_5xx  argus.upstream.status=500
+METRIC argus_requests_total   {model,decision,status_class}   (low-cardinality)
+METRIC argus_grounded_total   {model}
+METRIC argus_intelligence_health_ratio  (observable gauge)
+RESOURCE  service.name=argusd  service.version=0.1.0
+          service.instance.id=<128-bit>  deployment.environment.name=demo
+```
 
 **The two lines most likely to make a maintainer look twice:** citing the repo split with a pinned
 SHA (proves we read source, not blogs), and the `OTEL_SEMCONV_STABILITY_OPT_IN` → `Schemas.V1_26_0`
