@@ -52,15 +52,19 @@ func New(w *health.Window) (*Metrics, error) {
 
 // Record logs one request outcome.
 //
+// ctx MUST carry the active request span: the counter increments are recorded with
+// it so the SDK can attach EXEMPLARS (metric datapoint -> trace), which is the whole
+// basis of metric->trace click-through in SigNoz. Recording on context.Background()
+// (as this did before) makes exemplars structurally impossible.
+//
 // behavioral=true iff the primary response was 2xx: an upstream error is an
 // INFRASTRUCTURE failure, not behavioral drift, so it must never move the health
 // score (red-team R2). primaryGrounded is the grounding result of the FIRST answer
 // (pre-recovery) — Intelligence Health measures raw model quality.
-func (m *Metrics) Record(model, decision, statusClass string, primaryGrounded, behavioral bool, costUSD float64) {
+func (m *Metrics) Record(ctx context.Context, model, decision, statusClass string, primaryGrounded, behavioral bool, costUSD float64) {
 	if m == nil {
 		return
 	}
-	ctx := context.Background()
 	m.requests.Add(ctx, 1, metric.WithAttributes(
 		attribute.String("model", model),
 		attribute.String("decision", decision),

@@ -35,8 +35,9 @@ _provider = TracerProvider(resource=Resource.create({
     "service.instance.id": uuid.uuid4().hex,
     "deployment.environment.name": os.getenv("ARGUS_ENV", "demo"),
 }))
-# BatchSpanProcessor, not Simple: Simple exports (blocking) on every span.end(). Ada
-# force_flush()es before exit, so batching loses nothing and matches production shape.
+# BatchSpanProcessor, not Simple: Simple exports (blocking) on every span.end().
+# Batching means the queued span must be flushed on the way out — including on an
+# exception path — or it is silently dropped (see the try/finally in __main__).
 _provider.add_span_processor(BatchSpanProcessor(
     OTLPSpanExporter(endpoint="localhost:4317", insecure=True)))
 trace.set_tracer_provider(_provider)
@@ -77,5 +78,10 @@ def chat(prompt: str) -> str:
 
 if __name__ == "__main__":
     print("Ada: booking SFO -> JFK ...")
-    print("Ada answer:", chat(FIXTURE["user_prompt"]))
-    _provider.force_flush()
+    try:
+        print("Ada answer:", chat(FIXTURE["user_prompt"]))
+    finally:
+        # flush on EVERY path — a BatchSpanProcessor drops queued spans if the
+        # process exits (or raises) before export. Without this, an error inside
+        # chat() loses the invoke_agent span — the opposite of observability.
+        _provider.shutdown()

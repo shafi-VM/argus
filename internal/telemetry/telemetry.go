@@ -36,12 +36,14 @@ func newInstanceID() string {
 // identical resource on both signals is what a SigNoz engineer looks for first:
 // service.name/version, a per-instance id, and a low-cardinality environment.
 func newResource(ctx context.Context, serviceName string) (*resource.Resource, error) {
-	return resource.New(ctx, resource.WithAttributes(
-		attribute.String("service.name", serviceName),
-		attribute.String("service.version", "0.1.0"),
-		attribute.String("service.instance.id", instanceID),
-		attribute.String("deployment.environment.name", getenv("ARGUS_ENV", "demo")),
-	))
+	return resource.New(ctx,
+		resource.WithTelemetrySDK(), // telemetry.sdk.{name,language,version}
+		resource.WithAttributes(
+			attribute.String("service.name", serviceName),
+			attribute.String("service.version", "0.1.0"),
+			attribute.String("service.instance.id", instanceID),
+			attribute.String("deployment.environment.name", getenv("ARGUS_ENV", "demo")),
+		))
 }
 
 // Init configures the global tracer provider + propagator. Returns a shutdown func.

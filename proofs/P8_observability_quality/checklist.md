@@ -43,9 +43,13 @@ It is the cheapest credibility we can buy in this proof.
 ## Grading — 2026-07-23 (#16), against REAL emitted telemetry
 
 Method: drove every gateway decision path (pass / recovered / refused / upstream_error) through
-an in-memory OTel `SpanRecorder` + `ManualReader` and dumped the actual spans, attributes, and
-metrics; verified the resource by constructing it and reading its attributes. Evidence excerpt at
-the bottom of this file. **This is emitted telemetry, not code-reading.**
+an in-memory OTel `SpanRecorder` + `ManualReader` and asserted the actual spans, attributes, and
+metrics; verified the resource by constructing it and reading its attributes. **This is emitted
+telemetry, not code-reading — and it is now committed and regression-guarded**, not a throwaway:
+- `internal/gateway/telemetry_semconv_test.go` — span names/kinds, `gen_ai.*` attrs, tokens (input/output,
+  no total), status codes, `error.type`, and the low-cardinality metric-label sets.
+- `internal/telemetry/resource_test.go` — the complete resource + shared `service.instance.id`.
+Break any of these tomorrow (e.g. the token mapping) and the tick goes red with the test.
 
 - **✅ ticked** = proven from emitted telemetry on this machine.
 - **🖥️ demo-box** = correct on the emit side, but the *confirmation* is a SigNoz-UI view (service
@@ -75,6 +79,9 @@ the bottom of this file. **This is emitted telemetry, not code-reading.**
       prompt/user/trace/request id on any metric. (CLAUDE.md law; verified in the dump.)
 - [x] **Instrument types correct** — the two `argus_*_total` are monotonic **Sums** (counters),
       Intelligence Health is an **observable Gauge**. No double-counting; no counter-as-gauge.
+      ⚠️ **`model` label is caller-supplied** (the request's `model` field) — bounded by our
+      primary/fallback convention (`gpt-4o`/`gpt-4o-mini`), so low-cardinality in practice. A
+      malicious/misconfigured caller could inflate it; acceptable for the demo, worth an allowlist later.
 - [x] **`argus_*` metrics stay `argus_*`** — behavioral metrics, not renamed into `gen_ai.*`.
 - ➖ **GenAI client metrics** (12 histograms, spec buckets, `gen_ai.token.type`) N/A **by design**:
       argusd emits *behavioral* metrics about Argus decisions, not raw LLM-client token/duration
@@ -112,9 +119,13 @@ the bottom of this file. **This is emitted telemetry, not code-reading.**
       *child span within* argusd, not a bogus third service.
 - [x] **No orphan spans across Go↔Python** — traceparent injected by Ada, extracted by argusd; verified
       end-to-end in the live smoke (one linked trace, correct parenting).
-- [ ] 🖥️ **Metric → trace → logs click-through** (exemplars/correlation) — emit side is ready; the
-      click-through is a **SigNoz-UI confirmation** that needs the live demo stack. Not tickable here.
-- [ ] 🖥️ **Service map tells the story** (agent → gateway → recovery) — same: a SigNoz view; confirm on the demo box.
+- [ ] 🖥️ **Metric → trace click-through (exemplars)** — **was structurally impossible** (metrics were
+      recorded on `context.Background()` → no span context → no exemplars could ever emit). **Fixed in
+      this PR:** `Record` now takes the request `ctx` carrying the chat span, so counter increments are
+      exemplar-capable. Whether SigNoz *renders* the exemplar is the remaining UI confirmation → demo box.
+- [ ] 🖥️ **Service map tells the story** — topology is **`ada-agent → argusd`** (recovery is an INTERNAL
+      span *inside* argusd, NOT a third node). Emit side is correct (two services, linked trace); the map
+      itself is a SigNoz view → confirm on the demo box.
 
 ## The Go↔Python seam (our specific risk)
 Argus is Go gateway + Python agent. **W3C traceparent must propagate across that boundary** or the

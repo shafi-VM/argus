@@ -181,7 +181,9 @@ func (g *Gateway) ChatCompletions(w http.ResponseWriter, r *http.Request) {
 		costUSD         float64
 	)
 	defer func() {
-		g.metrics.Record(model, decision, statusClass, primaryGrounded, behavioral, costUSD)
+		// ctx carries the chat span -> metric increments become exemplar-capable
+		// (metric -> trace correlation in SigNoz).
+		g.metrics.Record(ctx, model, decision, statusClass, primaryGrounded, behavioral, costUSD)
 		g.noteDecision(model, decision)
 	}()
 
