@@ -98,6 +98,7 @@ Show: the GitHub repo · `docker compose up` · *"Works with any OTel-emitting a
 - *"Isn't this eval-gated CI with auto-rollback?"* → **Those gate a *deploy*. We gate *live traffic*.** ← sharpest, expect it.
 - *"Did you actually try the competitors?"* → **"We read their source."** *(After the P7 bake-off: name what we ran.)*
 - *"Couldn't you rig Portkey's `failure_status_codes:[446]` to do this?"* → **Plausibly — but it's undocumented, impossible in the OSS gateway, and counts binary denials, not a drifting quality score.**
+- *"Do you stop prompt injection?"* (15-sec aside — **caveat first**) → **"Not as a general classifier — and if the *retrieved context itself* is poisoned, this can't help; it trusts that context.** **But** the same deterministic guarantee that catches hallucination also blocks the exfil class that tries to emit an identifier **not in the retrieved context** — the value never leaves, and it's a *block*, not a probabilistic score. **The boundary is in our test suite, not just the slide** (`grounding/exfil_corollary_test.go`: win + both limits)." *(Say only if asked or if time allows — it's an amplifier, not a core beat.)*
 
 ## What's PROVEN vs TO BUILD (honesty — hold the line)
 - **PROVEN (P0–P4):** the SigNoz stack runs offline; the loop closes in ~5 s + ~30 ms; recovery is
