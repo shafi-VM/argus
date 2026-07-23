@@ -11,12 +11,13 @@ render as ONE linked trace in SigNoz.
 """
 import os
 import json
+import uuid
 import urllib.request
 
 from opentelemetry import trace, propagate
 from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import TracerProvider
-from opentelemetry.sdk.trace.export import SimpleSpanProcessor
+from opentelemetry.sdk.trace.export import BatchSpanProcessor
 from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
 
 ARGUS = os.getenv("ARGUS_URL", "http://localhost:8088")
@@ -26,9 +27,17 @@ _FIXTURE = os.path.join(os.path.dirname(__file__), "..", "fixtures", "booking.js
 with open(_FIXTURE, encoding="utf-8") as _f:
     FIXTURE = json.load(_f)
 
-_provider = TracerProvider(resource=Resource.create(
-    {"service.name": "ada-agent", "service.version": "0.1.0"}))
-_provider.add_span_processor(SimpleSpanProcessor(
+# Full resource attrs (P8): a SigNoz engineer looks for service.instance.id + a
+# low-cardinality environment, not just name/version. Matches argusd's resource shape.
+_provider = TracerProvider(resource=Resource.create({
+    "service.name": "ada-agent",
+    "service.version": "0.1.0",
+    "service.instance.id": uuid.uuid4().hex,
+    "deployment.environment.name": os.getenv("ARGUS_ENV", "demo"),
+}))
+# BatchSpanProcessor, not Simple: Simple exports (blocking) on every span.end(). Ada
+# force_flush()es before exit, so batching loses nothing and matches production shape.
+_provider.add_span_processor(BatchSpanProcessor(
     OTLPSpanExporter(endpoint="localhost:4317", insecure=True)))
 trace.set_tracer_provider(_provider)
 tracer = trace.get_tracer("ada")
