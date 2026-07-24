@@ -148,11 +148,8 @@ func groundingRate(raw []byte, minSamples int) (float64, time.Time, error) {
 			// even if chat decisions stopped — that would defeat the staleness guard),
 			// and not infra errors. The guard must track the signal it acts on.
 			if isBehavioral(decision) && ti >= 0 && ti < len(row) {
-				var ts string
-				if json.Unmarshal(row[ti], &ts) == nil {
-					if t, err := time.Parse(time.RFC3339Nano, ts); err == nil && t.After(newest) {
-						newest = t
-					}
+				if t, ok := parseSpanTime(row[ti]); ok && t.After(newest) {
+					newest = t
 				}
 			}
 		}
@@ -168,6 +165,37 @@ func groundingRate(raw []byte, minSamples int) (float64, time.Time, error) {
 		return 0, time.Time{}, fmt.Errorf("signoz: could not determine data freshness")
 	}
 	return counts["pass"] / behavioral, newest, nil
+}
+
+// parseSpanTime reads SigNoz's max(timestamp) aggregation value. The v5 API returns
+// it as a NUMERIC epoch (seconds, with a fractional part) — e.g. 1784888514.913 —
+// NOT an RFC3339 string. (The earlier RFC3339-only parse silently failed on every
+// real response, so `newest` stayed zero and the freshness guard held forever — the
+// LEARN loop never fired. This is the live-verified shape, 2026-07-24.) We parse the
+// number first and keep an RFC3339 fallback for robustness across versions.
+func parseSpanTime(raw json.RawMessage) (time.Time, bool) {
+	var sec float64
+	if json.Unmarshal(raw, &sec) == nil && sec > 0 {
+		// Tolerate seconds / millis / nanos by magnitude (epoch-2001..2286 in secs).
+		switch {
+		case sec > 1e17: // nanoseconds
+			return time.Unix(0, int64(sec)), true
+		case sec > 1e14: // microseconds
+			return time.Unix(0, int64(sec)*1e3), true
+		case sec > 1e11: // milliseconds
+			return time.Unix(0, int64(sec)*1e6), true
+		default: // seconds (with fractional part)
+			whole := int64(sec)
+			return time.Unix(whole, int64((sec-float64(whole))*1e9)), true
+		}
+	}
+	var s string
+	if json.Unmarshal(raw, &s) == nil {
+		if t, err := time.Parse(time.RFC3339Nano, s); err == nil {
+			return t, true
+		}
+	}
+	return time.Time{}, false
 }
 
 // isBehavioral reports whether a decision contributes to the grounding rate (and thus

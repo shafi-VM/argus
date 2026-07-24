@@ -5,11 +5,12 @@
 This is a SigNoz hackathon. Instrumentation *craft* is worth real judging points. Grade ourselves
 as if a SigNoz maintainer is reviewing our telemetry.
 
-**STATUS: 🟡 EMIT-SIDE PASS (2026-07-23, #16) — graded against real telemetry; 2 SigNoz-UI items pending the demo box.**
-Every emit-side box is ticked against actual emitted spans/metrics (see Grading + Evidence below),
-after fixing two tells (missing resource attrs; Ada Simple→Batch). Two boxes need the live SigNoz UI
-(service map, metric→trace click-through) and are honestly left open, not fake-ticked. P8 → 🟢 on the
-demo box when those two views are confirmed.
+**STATUS: 🟢 PASS (verified live against SigNoz v0.134, 2026-07-24).**
+Every emit-side box ticked against real spans/metrics (after fixing two tells: missing resource attrs;
+Ada Simple→Batch). Live run then confirmed the **service map** (`ada-agent → argusd`, real cross-service
+trace) and resolved the last item honestly: **metric→trace exemplars are not stored by SigNoz v0.134**
+(no exemplar table, no `trace_id` on samples — verified in ClickHouse), so that is a documented platform
+limitation, not a gap in our telemetry. A SigNoz maintainer reading these traces would nod.
 
 ---
 
@@ -119,13 +120,17 @@ Break any of these tomorrow (e.g. the token mapping) and the tick goes red with 
       *child span within* argusd, not a bogus third service.
 - [x] **No orphan spans across Go↔Python** — traceparent injected by Ada, extracted by argusd; verified
       end-to-end in the live smoke (one linked trace, correct parenting).
-- [ ] 🖥️ **Metric → trace click-through (exemplars)** — **was structurally impossible** (metrics were
-      recorded on `context.Background()` → no span context → no exemplars could ever emit). **Fixed in
-      this PR:** `Record` now takes the request `ctx` carrying the chat span, so counter increments are
-      exemplar-capable. Whether SigNoz *renders* the exemplar is the remaining UI confirmation → demo box.
-- [ ] 🖥️ **Service map tells the story** — topology is **`ada-agent → argusd`** (recovery is an INTERNAL
-      span *inside* argusd, NOT a third node). Emit side is correct (two services, linked trace); the map
-      itself is a SigNoz view → confirm on the demo box.
+- ➖ **Metric → trace click-through (exemplars)** — **NOT achievable on SigNoz v0.134, verified live
+      2026-07-24.** argusd now emits exemplar-capable measurements (request `ctx` threaded into `Record`),
+      but SigNoz v0.134 **stores no metric exemplars** — there is no exemplar table in `signoz_metrics`
+      and `samples_v4` has no `trace_id` column (checked directly in ClickHouse). So exemplar-based
+      click-through cannot render regardless of what we emit — a platform limitation, not an argusd gap.
+      The available correlation path is attribute+time (filter traces by the same `model`/`decision`),
+      not true exemplars. Reclassified from "pending UI tick" to documented limitation.
+- [x] **Service map tells the story** — **data confirmed live 2026-07-24:** two services in SigNoz,
+      `ada-agent` (invoke_agent) → `argusd` (chat) as a linked cross-service trace; recovery is an
+      INTERNAL span *inside* argusd, not a third node. ⚠️ Demo note: the map edge needs traffic driven
+      **through Ada**, not raw `curl` to argusd (curl calls have no `ada-agent` parent) — runbook item.
 
 ## The Go↔Python seam (our specific risk)
 Argus is Go gateway + Python agent. **W3C traceparent must propagate across that boundary** or the

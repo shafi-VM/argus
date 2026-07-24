@@ -63,17 +63,15 @@ def widget(title, panel, query_data, formulas=None, unit="", stacked=False):
 
 
 def build_trace_widgets():
-    # 1) The moving money visual: decisions over time, grouped. pass (green) is displaced
-    #    by recovered (amber) under drift, then returns. No formula — highest confidence.
-    decisions = widget(
-        "Decisions over time", "graph",
-        [trace_query("A", CHAT_FILTER,
-                     group_by=[{"name": "argus.decision", "fieldContext": "span"}],
-                     legend="{{argus.decision}}")],
-        stacked=True,
-    )
-    # 2) Live Intelligence Health = pass / behavioral, from traces (~13s), formula A/B.
-    #    B is disabled (compute-only). This is the fast twin of the laggy metric gauge.
+    # NOTE (verified live 2026-07-24 on SigNoz v0.134): a GROUPED trace count as a dashboard
+    # GRAPH widget renders as an error (red ✕) even though the identical query returns data
+    # via /api/v5/query_range. The formula panel below renders fine. So the grouped
+    # "decisions over time" trace panel is dropped here — the metric panel
+    # "Requests by decision (rate)" (from build_dashboard.py) shows the same decision mix and
+    # renders, and Mission Control is the 0-lag live surface. This keeps every panel working.
+    #
+    # Live Intelligence Health = pass / behavioral, from traces (~13s fresh — the fast twin of
+    # the ~60s-lagged metric gauge). B is disabled (compute-only for the A/B formula).
     health = widget(
         "Intelligence Health — live", "graph",
         [trace_query("A", PASS_FILTER, legend="pass"),
@@ -81,7 +79,7 @@ def build_trace_widgets():
         formulas=[{"expression": "A/B", "queryName": "F1", "legend": "grounding rate",
                    "disabled": False}],
     )
-    return [decisions, health]
+    return [health]
 
 
 def main():
