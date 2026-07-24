@@ -50,6 +50,29 @@ settled decisions.
 
 ---
 
+## Day 8 — 2026-07-24 (first FULL live run on real SigNoz — and it caught a demo-killer)
+1. **Whole stack up on real SigNoz (v0.134 via Foundry).** 8080 clash with a local `deltext-nginx` →
+   remapped SigNoz UI to 8081 (exactly the Day-1 port lesson, again). All beats driven live end-to-end:
+   argusd + mock + Ada + LEARN poller + hero dashboard, real OTLP → ClickHouse.
+2. **PREVENT — live green.** 185 `pass` + 114 `recovered` in ClickHouse; user never received a `UA99`.
+3. **🐛 LEARN was silently BROKEN — caught only by running it live.** The #27 R5 age-fix parsed
+   `max(timestamp)` as an **RFC3339 string**, but real SigNoz v5 returns a **numeric epoch float**
+   (`1784888514.913`). So `newest` stayed zero → the freshness guard errored "can't determine freshness"
+   → the poller **held forever and never quarantined.** The unit test had used a *string* fixture and so
+   went green over a bug that made the entire LEARN beat a no-op on stage. **Third time** the
+   fake-shape-in-a-test pattern bit us (parser rows, then the age hard-zero, now the timestamp type).
+   Fix: `parseSpanTime` handles numeric epochs by magnitude (s/ms/µs/ns) + RFC3339 fallback; test now
+   uses the **real numeric shape**.
+4. **After the fix — LEARN live green.** drift injected → **QUARANTINE 20.1s** (gpt-4o → gpt-4o-mini
+   reroute) → **RECOVER 46.1s**, HTTP 200 throughout. The `argus_intelligence_health_ratio` gauge traced
+   a clean **0.96 → 0.61 → 0.23 → 0 → back to 1.0** — the cold-open green→red→green, for real.
+5. **P8 → 🟢.** Service map (`ada-agent → argusd`) confirmed live. Honest limit found: **SigNoz v0.134
+   stores no metric exemplars** (no table, no `trace_id` on samples), so metric→trace exemplar
+   click-through can't render on this version — documented as a platform limit, not our gap.
+- **The lesson, stated plainly:** "verified hands-on" the way we'd been doing it (unit tests + local
+  drives) was **not enough for the SigNoz-integration seams** — every one of them hid a real-vs-fake
+  shape bug that only a live run against real SigNoz exposed. Live-verify the integration boundaries.
+
 ## Day 4 — 2026-07-17 (competitor recon — we refuted ourselves)
 1. **🔴→🟡 P7 (not 🟢).** 11 tools researched from **source code, licenses, issues, maintainer threads** —
    not marketing. Held at 🟡 on purpose: P7's bar says *"actually try each, first-hand"* and we didn't
