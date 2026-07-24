@@ -24,7 +24,8 @@ type Window struct {
 
 type bucket struct {
 	epoch    int64 // unixSec/bucketSecs at last write; detects slot reuse across cycles
-	total    int
+	all      int   // EVERY request (incl upstream/transport errors) — infra denominator
+	total    int   // behavioral (2xx) requests only — the intelligence denominator
 	grounded int
 	loops    int
 	cost     float64
@@ -70,7 +71,10 @@ func NewWindow(c Config) *Window {
 func (w *Window) epoch() int64 { return w.now().Unix() / w.bucketSecs }
 
 // Record adds one 2xx response outcome to the current bucket.
-func (w *Window) Record(grounded bool, loops int, costUSD float64) {
+// Record adds one request outcome. behavioral is true iff the response was 2xx: an
+// upstream/transport error counts toward INFRASTRUCTURE health (all) but NOT toward
+// the behavioral score (total/grounded/cost) — R2.
+func (w *Window) Record(behavioral, grounded bool, loops int, costUSD float64) {
 	w.mu.Lock()
 	defer w.mu.Unlock()
 	e := w.epoch()
@@ -78,12 +82,54 @@ func (w *Window) Record(grounded bool, loops int, costUSD float64) {
 	if b.epoch != e { // slot belongs to an older cycle -> reset it for this epoch
 		*b = bucket{epoch: e}
 	}
-	b.total++
-	if grounded {
-		b.grounded++
+	b.all++
+	if behavioral {
+		b.total++
+		if grounded {
+			b.grounded++
+		}
+		b.loops += loops
+		b.cost += costUSD
 	}
-	b.loops += loops
-	b.cost += costUSD
+}
+
+// InfraRatio returns 2xx / all over the window — infrastructure health. Stays ~1.0
+// while behavior rots (the whole thesis: infra green, intelligence red); it only drops
+// when the upstream actually errors. Below MinSamples it returns coldValue (warm-up).
+func (w *Window) InfraRatio(coldValue float64) float64 {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	e := w.epoch()
+	var all, ok int
+	for _, b := range w.buckets {
+		if d := e - b.epoch; d >= 0 && d < w.nBuckets {
+			all += b.all
+			ok += b.total
+		}
+	}
+	if all < w.minSamples {
+		return coldValue
+	}
+	return float64(ok) / float64(all)
+}
+
+// CostAvg returns average USD per behavioral request over the window (0 if none).
+func (w *Window) CostAvg() float64 {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	e := w.epoch()
+	var total int
+	var cost float64
+	for _, b := range w.buckets {
+		if d := e - b.epoch; d >= 0 && d < w.nBuckets {
+			total += b.total
+			cost += b.cost
+		}
+	}
+	if total == 0 {
+		return 0
+	}
+	return cost / float64(total)
 }
 
 // Score returns Intelligence Health in [0,1] and the sample count in the window.

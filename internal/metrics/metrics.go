@@ -36,15 +36,29 @@ func New(w *health.Window) (*Metrics, error) {
 		return nil, err
 	}
 	gauge, err := m.Float64ObservableGauge("argus_intelligence_health_ratio",
-		metric.WithDescription("windowed behavioral health in [0,1]; the cold-open number"))
+		metric.WithDescription("windowed behavioral health in [0,1]; the cold-open RED number"))
 	if err != nil {
 		return nil, err
 	}
+	infra, err := m.Float64ObservableGauge("argus_infra_health_ratio",
+		metric.WithDescription("windowed 2xx/all in [0,1]; the cold-open GREEN number (stays green while behavior rots)"))
+	if err != nil {
+		return nil, err
+	}
+	cost, err := m.Float64ObservableGauge("argus_cost_usd_per_request",
+		metric.WithDescription("windowed average USD per behavioral request"))
+	if err != nil {
+		return nil, err
+	}
+	// One callback observes all three window-derived gauges each export cycle, so the
+	// hero panels move even between requests.
 	if _, err = m.RegisterCallback(func(_ context.Context, o metric.Observer) error {
 		v, _ := w.Score(1.0)
 		o.ObserveFloat64(gauge, v)
+		o.ObserveFloat64(infra, w.InfraRatio(1.0))
+		o.ObserveFloat64(cost, w.CostAvg())
 		return nil
-	}, gauge); err != nil {
+	}, gauge, infra, cost); err != nil {
 		return nil, err
 	}
 	return &Metrics{window: w, requests: requests, grounded: grounded}, nil
@@ -70,10 +84,10 @@ func (m *Metrics) Record(ctx context.Context, model, decision, statusClass strin
 		attribute.String("decision", decision),
 		attribute.String("status_class", statusClass),
 	))
-	if behavioral {
-		if primaryGrounded {
-			m.grounded.Add(ctx, 1, metric.WithAttributes(attribute.String("model", model)))
-		}
-		m.window.Record(primaryGrounded, 0, costUSD)
+	if behavioral && primaryGrounded {
+		m.grounded.Add(ctx, 1, metric.WithAttributes(attribute.String("model", model)))
 	}
+	// ALWAYS record to the window (even on upstream errors) so infra health has a real
+	// denominator; the window itself keeps behavioral vs infra separate (R2).
+	m.window.Record(behavioral, primaryGrounded, 0, costUSD)
 }

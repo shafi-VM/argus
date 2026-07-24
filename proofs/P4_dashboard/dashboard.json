@@ -3,7 +3,7 @@
   "layout": [
     {
       "h": 4,
-      "i": "5fba266c-3063-4da8-8145-70e894b709e1",
+      "i": "c1b109b4-61cf-4fcd-9ede-a8a7d24a3f43",
       "moved": false,
       "static": false,
       "w": 6,
@@ -12,7 +12,7 @@
     },
     {
       "h": 4,
-      "i": "cda6410f-1afb-4067-b0c5-cd75e3b3c69a",
+      "i": "82991d58-f699-448b-b54e-c0f76c54cd4f",
       "moved": false,
       "static": false,
       "w": 6,
@@ -21,78 +21,50 @@
     },
     {
       "h": 6,
-      "i": "9f593389-457d-4ebb-b613-1042832c49f1",
+      "i": "4ee87e49-a1ce-4771-a1bc-ac1249622fb3",
       "moved": false,
       "static": false,
       "w": 6,
       "x": 0,
-      "y": 4
+      "y": 6
     },
     {
       "h": 6,
-      "i": "4f8412d6-e725-42e1-9c53-bb37230af061",
+      "i": "717551a6-9fb6-4bdb-ad88-a1f96a02230e",
       "moved": false,
       "static": false,
       "w": 6,
       "x": 6,
-      "y": 4
+      "y": 6
     },
     {
-      "h": 4,
-      "i": "3b0225fb-0827-459c-a262-325bc68040ee",
+      "h": 6,
+      "i": "e42881cf-8c97-4133-96b6-5b30a1daec08",
       "moved": false,
       "static": false,
       "w": 6,
       "x": 0,
-      "y": 10
+      "y": 12
     },
     {
       "h": 6,
-      "i": "7e09429a-ed5c-4375-bb25-b55f5afcfec8",
+      "i": "020db7ee-b516-4a81-b04e-7ac438c0ef14",
       "moved": false,
       "static": false,
       "w": 6,
       "x": 6,
-      "y": 10
+      "y": 12
     },
     {
       "h": 6,
-      "i": "805e13ce-1082-46de-a01b-ed218f8c4720",
+      "i": "43ae49c6-4e15-4419-b363-67fee9d8fc66",
       "moved": false,
       "static": false,
       "w": 6,
       "x": 0,
-      "y": 14
-    },
-    {
-      "h": 6,
-      "i": "5ab23c39-462c-49b7-8ffc-7b3cacbf602a",
-      "moved": false,
-      "static": false,
-      "w": 6,
-      "x": 6,
-      "y": 16
-    },
-    {
-      "h": 6,
-      "i": "44da2515-28b8-4343-8ca1-58643c032d13",
-      "moved": false,
-      "static": false,
-      "w": 6,
-      "x": 0,
-      "y": 22
-    },
-    {
-      "h": 6,
-      "i": "0176c3bc-e0d5-4618-adf2-fbd233ace1cb",
-      "moved": false,
-      "static": false,
-      "w": 6,
-      "x": 6,
-      "y": 22
+      "y": 18
     }
   ],
-  "panelMap": {},
   "tags": [
     "argus",
     "hero"
@@ -102,7 +74,7 @@
   "widgets": [
     {
       "description": "",
-      "id": "5fba266c-3063-4da8-8145-70e894b709e1",
+      "id": "c1b109b4-61cf-4fcd-9ede-a8a7d24a3f43",
       "isStacked": false,
       "nullZeroValues": "zero",
       "opacity": "1",
@@ -145,7 +117,7 @@
             "query": ""
           }
         ],
-        "id": "7bcd0b72-74c5-489a-a9ce-ea1dacfa83e0",
+        "id": "9b2d5eca-4386-4542-a4bd-78e5d0612523",
         "promql": [
           {
             "disabled": false,
@@ -162,7 +134,7 @@
     },
     {
       "description": "",
-      "id": "cda6410f-1afb-4067-b0c5-cd75e3b3c69a",
+      "id": "82991d58-f699-448b-b54e-c0f76c54cd4f",
       "isStacked": false,
       "nullZeroValues": "zero",
       "opacity": "1",
@@ -205,7 +177,7 @@
             "query": ""
           }
         ],
-        "id": "9ef1ca2c-7a9a-4f8f-a171-bcba0d176e22",
+        "id": "e543a2d3-8f29-4918-a5aa-a67ceaebccbc",
         "promql": [
           {
             "disabled": false,
@@ -222,7 +194,7 @@
     },
     {
       "description": "",
-      "id": "9f593389-457d-4ebb-b613-1042832c49f1",
+      "id": "4ee87e49-a1ce-4771-a1bc-ac1249622fb3",
       "isStacked": false,
       "nullZeroValues": "zero",
       "opacity": "1",
@@ -265,7 +237,7 @@
             "query": ""
           }
         ],
-        "id": "6d98852b-11db-4d98-9c3a-e82823d5a90e",
+        "id": "aed6d2a5-19d2-4874-aa9e-f92280f09768",
         "promql": [
           {
             "disabled": false,
@@ -282,7 +254,7 @@
     },
     {
       "description": "",
-      "id": "4f8412d6-e725-42e1-9c53-bb37230af061",
+      "id": "717551a6-9fb6-4bdb-ad88-a1f96a02230e",
       "isStacked": false,
       "nullZeroValues": "zero",
       "opacity": "1",
@@ -325,7 +297,7 @@
             "query": ""
           }
         ],
-        "id": "ff8b2d02-8530-42a6-8390-68d87a0784bc",
+        "id": "4b053d08-dd73-441b-b2eb-720febc09943",
         "promql": [
           {
             "disabled": false,
@@ -342,247 +314,7 @@
     },
     {
       "description": "",
-      "id": "3b0225fb-0827-459c-a262-325bc68040ee",
-      "isStacked": false,
-      "nullZeroValues": "zero",
-      "opacity": "1",
-      "panelTypes": "value",
-      "query": {
-        "builder": {
-          "queryData": [
-            {
-              "aggregations": [
-                {
-                  "metricName": "argus_users_impacted",
-                  "reduceTo": "last",
-                  "spaceAggregation": "avg",
-                  "temporality": null,
-                  "timeAggregation": "avg"
-                }
-              ],
-              "dataSource": "metrics",
-              "disabled": false,
-              "expression": "A",
-              "functions": [],
-              "groupBy": [],
-              "having": {
-                "expression": ""
-              },
-              "legend": "",
-              "limit": null,
-              "orderBy": [],
-              "queryName": "A",
-              "stepInterval": 60
-            }
-          ],
-          "queryFormulas": []
-        },
-        "clickhouse_sql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": ""
-          }
-        ],
-        "id": "8a74b308-d6cd-42b3-8221-d514cdf64374",
-        "promql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": ""
-          }
-        ],
-        "queryType": "builder"
-      },
-      "timePreferance": "GLOBAL_TIME",
-      "title": "Users impacted",
-      "yAxisUnit": ""
-    },
-    {
-      "description": "",
-      "id": "7e09429a-ed5c-4375-bb25-b55f5afcfec8",
-      "isStacked": false,
-      "nullZeroValues": "zero",
-      "opacity": "1",
-      "panelTypes": "graph",
-      "query": {
-        "builder": {
-          "queryData": [
-            {
-              "aggregations": [
-                {
-                  "metricName": "argus_grounding_failed_total",
-                  "reduceTo": "sum",
-                  "spaceAggregation": "sum",
-                  "temporality": null,
-                  "timeAggregation": "rate"
-                }
-              ],
-              "dataSource": "metrics",
-              "disabled": false,
-              "expression": "A",
-              "functions": [],
-              "groupBy": [],
-              "having": {
-                "expression": ""
-              },
-              "legend": "",
-              "limit": null,
-              "orderBy": [],
-              "queryName": "A",
-              "stepInterval": 60
-            }
-          ],
-          "queryFormulas": []
-        },
-        "clickhouse_sql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": ""
-          }
-        ],
-        "id": "c09080dd-ae3d-4105-a8f9-ef93967ff92f",
-        "promql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": ""
-          }
-        ],
-        "queryType": "builder"
-      },
-      "timePreferance": "GLOBAL_TIME",
-      "title": "Grounding failures (rate)",
-      "yAxisUnit": ""
-    },
-    {
-      "description": "",
-      "id": "805e13ce-1082-46de-a01b-ed218f8c4720",
-      "isStacked": false,
-      "nullZeroValues": "zero",
-      "opacity": "1",
-      "panelTypes": "graph",
-      "query": {
-        "builder": {
-          "queryData": [
-            {
-              "aggregations": [
-                {
-                  "metricName": "argus_reasoning_loop_total",
-                  "reduceTo": "sum",
-                  "spaceAggregation": "sum",
-                  "temporality": null,
-                  "timeAggregation": "rate"
-                }
-              ],
-              "dataSource": "metrics",
-              "disabled": false,
-              "expression": "A",
-              "functions": [],
-              "groupBy": [],
-              "having": {
-                "expression": ""
-              },
-              "legend": "",
-              "limit": null,
-              "orderBy": [],
-              "queryName": "A",
-              "stepInterval": 60
-            }
-          ],
-          "queryFormulas": []
-        },
-        "clickhouse_sql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": ""
-          }
-        ],
-        "id": "be3ca747-32d0-426d-af20-6f94c7a22e8a",
-        "promql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": ""
-          }
-        ],
-        "queryType": "builder"
-      },
-      "timePreferance": "GLOBAL_TIME",
-      "title": "Reasoning loops (rate)",
-      "yAxisUnit": ""
-    },
-    {
-      "description": "",
-      "id": "5ab23c39-462c-49b7-8ffc-7b3cacbf602a",
-      "isStacked": false,
-      "nullZeroValues": "zero",
-      "opacity": "1",
-      "panelTypes": "graph",
-      "query": {
-        "builder": {
-          "queryData": [
-            {
-              "aggregations": [
-                {
-                  "metricName": "argus_recoveries_total",
-                  "reduceTo": "sum",
-                  "spaceAggregation": "sum",
-                  "temporality": null,
-                  "timeAggregation": "rate"
-                }
-              ],
-              "dataSource": "metrics",
-              "disabled": false,
-              "expression": "A",
-              "functions": [],
-              "groupBy": [],
-              "having": {
-                "expression": ""
-              },
-              "legend": "",
-              "limit": null,
-              "orderBy": [],
-              "queryName": "A",
-              "stepInterval": 60
-            }
-          ],
-          "queryFormulas": []
-        },
-        "clickhouse_sql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": ""
-          }
-        ],
-        "id": "f4f317e6-4560-452a-a079-a5635a8e2410",
-        "promql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": ""
-          }
-        ],
-        "queryType": "builder"
-      },
-      "timePreferance": "GLOBAL_TIME",
-      "title": "Recoveries (rate)",
-      "yAxisUnit": ""
-    },
-    {
-      "description": "",
-      "id": "44da2515-28b8-4343-8ca1-58643c032d13",
+      "id": "e42881cf-8c97-4133-96b6-5b30a1daec08",
       "isStacked": true,
       "nullZeroValues": "zero",
       "opacity": "1",
@@ -593,30 +325,34 @@
             {
               "aggregations": [
                 {
-                  "expression": "count()"
+                  "metricName": "argus_requests_total",
+                  "reduceTo": "sum",
+                  "spaceAggregation": "sum",
+                  "temporality": null,
+                  "timeAggregation": "rate"
                 }
               ],
-              "dataSource": "traces",
+              "dataSource": "metrics",
               "disabled": false,
               "expression": "A",
-              "filter": {
-                "expression": "name = 'chat gpt-4o' OR name = 'chat gpt-4o-mini'"
-              },
               "functions": [],
               "groupBy": [
                 {
-                  "fieldContext": "span",
-                  "name": "argus.decision"
+                  "dataType": "string",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "decision",
+                  "type": "tag"
                 }
               ],
               "having": {
                 "expression": ""
               },
-              "legend": "{{argus.decision}}",
+              "legend": "{{decision}}",
               "limit": null,
               "orderBy": [],
               "queryName": "A",
-              "stepInterval": 30
+              "stepInterval": 60
             }
           ],
           "queryFormulas": []
@@ -629,7 +365,7 @@
             "query": ""
           }
         ],
-        "id": "4647eba2-0c91-446d-aa38-525d9b58eeb1",
+        "id": "60826734-78cf-4d4f-998e-4d5ddcc0650a",
         "promql": [
           {
             "disabled": false,
@@ -641,12 +377,72 @@
         "queryType": "builder"
       },
       "timePreferance": "GLOBAL_TIME",
-      "title": "Decisions over time [traces]",
+      "title": "Requests by decision (rate)",
       "yAxisUnit": ""
     },
     {
       "description": "",
-      "id": "0176c3bc-e0d5-4618-adf2-fbd233ace1cb",
+      "id": "020db7ee-b516-4a81-b04e-7ac438c0ef14",
+      "isStacked": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregations": [
+                {
+                  "metricName": "argus_grounded_total",
+                  "reduceTo": "sum",
+                  "spaceAggregation": "sum",
+                  "temporality": null,
+                  "timeAggregation": "rate"
+                }
+              ],
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "functions": [],
+              "groupBy": [],
+              "having": {
+                "expression": ""
+              },
+              "legend": "",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "stepInterval": 60
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "94f9a508-7e12-4e0e-a5b1-f8487ff31b0f",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder"
+      },
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Grounded first-try (rate)",
+      "yAxisUnit": ""
+    },
+    {
+      "description": "",
+      "id": "43ae49c6-4e15-4419-b363-67fee9d8fc66",
       "isStacked": false,
       "nullZeroValues": "zero",
       "opacity": "1",
@@ -718,7 +514,7 @@
             "query": ""
           }
         ],
-        "id": "ae891177-8926-4cdc-8c4e-f11196a89055",
+        "id": "092524ad-502b-4e2e-810c-737a414e6253",
         "promql": [
           {
             "disabled": false,

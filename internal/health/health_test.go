@@ -19,8 +19,8 @@ func near(a, b float64) bool { return math.Abs(a-b) < 1e-9 }
 
 func TestWarmUpHoldsColdValue(t *testing.T) {
 	w := newWin(&clock{t: time.Unix(1000, 0)})
-	w.Record(true, 0, 0)
-	w.Record(true, 0, 0) // only 2 samples, < MinSamples=3
+	w.Record(true, true, 0, 0)
+	w.Record(true, true, 0, 0) // only 2 samples, < MinSamples=3
 	if got, n := w.Score(1.0); !near(got, 1.0) || n != 2 {
 		t.Fatalf("warm-up: got %v (n=%d), want cold 1.0", got, n)
 	}
@@ -29,10 +29,10 @@ func TestWarmUpHoldsColdValue(t *testing.T) {
 func TestGroundingRateDrivesScore(t *testing.T) {
 	w := newWin(&clock{t: time.Unix(1000, 0)})
 	for i := 0; i < 6; i++ {
-		w.Record(true, 0, 0)
+		w.Record(true, true, 0, 0)
 	}
 	for i := 0; i < 4; i++ {
-		w.Record(false, 0, 0) // 6/10 grounded
+		w.Record(true, false, 0, 0) // 6/10 grounded
 	}
 	if got, n := w.Score(1.0); !near(got, 0.6) || n != 10 {
 		t.Fatalf("score = %v (n=%d), want 0.60", got, n)
@@ -43,7 +43,7 @@ func TestPenaltiesAreBounded(t *testing.T) {
 	w := newWin(&clock{t: time.Unix(1000, 0)})
 	// all grounded but heavy loops + cost -> penalties cap, score stays >= 0.5
 	for i := 0; i < 5; i++ {
-		w.Record(true, 100, 100.0)
+		w.Record(true, true, 100, 100.0)
 	}
 	got, _ := w.Score(1.0)
 	// grounding 1.0 - loop cap 0.30 - cost cap 0.20 = 0.50 exactly
@@ -56,11 +56,11 @@ func TestOldSamplesEvictedByTime(t *testing.T) {
 	c := &clock{t: time.Unix(1000, 0)}
 	w := newWin(c)
 	for i := 0; i < 5; i++ {
-		w.Record(false, 0, 0) // 5 ungrounded now
+		w.Record(true, false, 0, 0) // 5 ungrounded now
 	}
 	c.tick(30 * time.Second) // window is 15s -> all evicted
 	for i := 0; i < 5; i++ {
-		w.Record(true, 0, 0) // 5 grounded later
+		w.Record(true, true, 0, 0) // 5 grounded later
 	}
 	if got, n := w.Score(1.0); !near(got, 1.0) || n != 5 {
 		t.Fatalf("after eviction score = %v (n=%d), want 1.0 over 5 fresh", got, n)
@@ -111,5 +111,35 @@ func TestGovernorHysteresisNoFlap(t *testing.T) {
 	}
 	if a := g.Observe(0.9); a != None {
 		t.Fatalf("re-fired Recover; not idempotent: %v", a)
+	}
+}
+
+func TestInfraRatioSeparatesInfraFromBehavior(t *testing.T) {
+	w := newWin(&clock{t: time.Unix(1000, 0)})
+	// 8 behavioral (2xx) all ungrounded — behavior is terrible...
+	for i := 0; i < 8; i++ {
+		w.Record(true, false, 0, 0)
+	}
+	// ...but only 2 infra errors (non-2xx).
+	for i := 0; i < 2; i++ {
+		w.Record(false, false, 0, 0)
+	}
+	if infra := w.InfraRatio(1.0); !near(infra, 8.0/10.0) {
+		t.Fatalf("InfraRatio = %v, want 0.8 (8 ok / 10 all)", infra)
+	}
+	// Intelligence health should be ~0 (all behavioral ungrounded) while infra is 0.8 —
+	// the whole thesis: infra green, intelligence red.
+	if score, _ := w.Score(1.0); !near(score, 0) {
+		t.Fatalf("Score = %v, want ~0 (behavior collapsed even though infra is 0.8)", score)
+	}
+}
+
+func TestCostAvg(t *testing.T) {
+	w := newWin(&clock{t: time.Unix(1000, 0)})
+	for i := 0; i < 4; i++ {
+		w.Record(true, true, 0, 0.01)
+	}
+	if c := w.CostAvg(); !near(c, 0.01) {
+		t.Fatalf("CostAvg = %v, want 0.01", c)
 	}
 }
