@@ -13,6 +13,8 @@
 *Every server is green. Every request returns `200`. And the answers are quietly wrong. That gap —
 🟢 infra healthy beside 🔴 intelligence collapsing — is where Argus lives.*
 
+📖 **The full story:** [*Healthy Infrastructure, Unhealthy Intelligence — how we built Argus on SigNoz*](https://medium.com/@shfahmd001_53931/healthy-infrastructure-unhealthy-intelligence-we-built-an-immune-system-for-ai-agents-on-signoz-db7caa47d69b) — what we built, what broke, and how SigNoz became load-bearing.
+
 ---
 
 ## The problem
@@ -43,8 +45,8 @@ is the control loop's sensory input. *(PREVENT stays inline and never blocks on 
 
 Reproduce it yourself: `python demo/drive.py` (runbook: [`demo/README.md`](demo/README.md)).
 
-- **PREVENT:** a hallucination (`UA99`) is caught and re-grounded **inline in 3.3 ms** — the caller
-  received the correct `AA42`, never the bad answer.
+- **PREVENT:** a hallucination (`UA99`) is caught and re-grounded **inline in a few milliseconds** (the
+  grounding check itself measures **0.138 ms**) — the caller received the correct `AA42`, never the bad answer.
 - **LEARN:** sustained drift → **quarantine ~11 s → reroute → recover ~37 s**, with **0 non-200
   responses** across the entire arc. The `argus_intelligence_health_ratio` gauge traces a clean
   green → red → green while HTTP stays `200` the whole time.
@@ -65,6 +67,16 @@ Live scoreboard: [`proofs/SUMMARY.md`](proofs/SUMMARY.md).
 - SigNoz stores no metric exemplars, so metric→trace click-through can't render — a platform limit; our
   telemetry emits them.
 
+## Run it
+
+Argus runs SigNoz the SigNoz-native way — [Foundry](https://github.com/SigNoz/foundry), *one config,
+one command*. This repo ships the exact Foundry config ([`casting.yaml`](casting.yaml) +
+[`casting.yaml.lock`](casting.yaml.lock)) so anyone can reproduce our deployment:
+
+1. **Bring up SigNoz** — `foundryctl forge` → `docker compose up` (see [`DEPLOY.md`](DEPLOY.md)).
+2. **Run the gateway + agent + replay engine, then measure the demo beats** — full runbook in
+   [`demo/README.md`](demo/README.md); `python demo/drive.py` drives PREVENT + LEARN end-to-end.
+
 ## Stack
 
 Go gateway (`cmd/argusd`, one binary — PREVENT inline + LEARN poller + Mission Control) · Python demo
@@ -79,8 +91,10 @@ The **Agents of SigNoz** hackathon — **Track 01: AI & Agent Observability**. S
 ## Repo map
 
 [`VISION.md`](VISION.md) · [`DECISIONS.md`](DECISIONS.md) (ADRs) · [`KILL_LIST.md`](KILL_LIST.md) ·
-[`TERMINOLOGY.md`](TERMINOLOGY.md) · [`DEMO_SCRIPT.md`](DEMO_SCRIPT.md) · [`demo/`](demo/) (runbook +
-driver) · [`proofs/`](proofs/) (the de-risking harness) · [`JOURNAL.md`](JOURNAL.md).
+[`TERMINOLOGY.md`](TERMINOLOGY.md) · [`DEPLOY.md`](DEPLOY.md) (Foundry / `casting.yaml`) ·
+[`DEMO_SCRIPT.md`](DEMO_SCRIPT.md) · [`demo/`](demo/) (runbook + driver) ·
+[`proofs/`](proofs/) (the de-risking harness) · [`JOURNAL.md`](JOURNAL.md) ·
+[`AI_USE.md`](AI_USE.md) (AI-assistant disclosure).
 
 ## License
 
