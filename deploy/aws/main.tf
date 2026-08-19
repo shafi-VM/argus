@@ -8,8 +8,9 @@ data "aws_ami" "ubuntu" {
   owners      = ["099720109477"] # Canonical
 
   filter {
-    name   = "name"
-    values = ["ubuntu/images/hvm-ssd-gp3/ubuntu-noble-24.04-amd64-server-*"]
+    name = "name"
+    # matches both the hvm-ssd and hvm-ssd-gp3 Canonical publications for noble
+    values = ["ubuntu/images/hvm-ssd*/ubuntu-noble-24.04-amd64-server-*"]
   }
 
   filter {
@@ -73,6 +74,13 @@ resource "aws_instance" "argus" {
   root_block_device {
     volume_size = var.root_volume_gb
     volume_type = "gp3"
+    encrypted   = true
+  }
+
+  # Enforce IMDSv2 — blocks the SSRF-to-credential-theft class against the proxy.
+  metadata_options {
+    http_endpoint = "enabled"
+    http_tokens   = "required"
   }
 
   user_data = templatefile("${path.module}/user-data.sh.tftpl", {
