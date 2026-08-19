@@ -22,6 +22,25 @@
 
 ---
 
+## Quickstart — one command, zero setup
+
+The **PREVENT** reflex and **Mission Control** run with no SigNoz, no API key, and no network — the
+whole money moment is self-contained and airplane-safe:
+
+```bash
+docker compose up --build            # gateway + deterministic replay engine
+open http://localhost:8088/mission   # watch it live
+make demo                            # drive the money moment and print the measured timings
+```
+
+`make demo` catches a hallucination (`UA99`) in the request path and corrects it to the grounded
+`AA42` — **HTTP 200, a few milliseconds, and the caller never sees the bad answer.**
+
+**Want the full LEARN arc** (drift → quarantine → reroute → recover, through SigNoz)? Stand up SigNoz,
+then `make demo-signoz` — see [**Run it**](#run-it).
+
+---
+
 ## The problem
 
 Your monitoring watches the machine. **Nobody watches the mind.** An AI agent can return HTTP `200`
@@ -104,13 +123,28 @@ Live scoreboard: [`proofs/SUMMARY.md`](proofs/SUMMARY.md).
 
 ## Run it
 
-Argus runs SigNoz the SigNoz-native way — [Foundry](https://github.com/SigNoz/foundry), *one config,
-one command*. This repo ships the exact Foundry config ([`casting.yaml`](casting.yaml) +
-[`casting.yaml.lock`](casting.yaml.lock)) so anyone can reproduce our deployment:
+**Tier 1 — the money moment, zero dependencies** (verified in CI-adjacent form; see
+[Quickstart](#quickstart--one-command-zero-setup)):
+
+```bash
+docker compose up --build   # gateway + replay engine → http://localhost:8088/mission
+make demo                   # drive PREVENT, print measured timings
+```
+
+The driver auto-detects that the LEARN poller is off and runs the PREVENT beat only — no SigNoz needed.
+
+**Tier 2 — the full LEARN arc through SigNoz.** Argus runs SigNoz the SigNoz-native way —
+[Foundry](https://github.com/SigNoz/foundry), *one config, one command*. This repo ships the exact
+Foundry config ([`casting.yaml`](casting.yaml) + [`casting.yaml.lock`](casting.yaml.lock)) so anyone
+can reproduce our deployment:
 
 1. **Bring up SigNoz** — `foundryctl forge` → `docker compose up` (see [`DEPLOY.md`](DEPLOY.md)).
-2. **Run the gateway + agent + replay engine, then measure the demo beats** — full runbook in
-   [`demo/README.md`](demo/README.md); `python demo/drive.py` drives PREVENT + LEARN end-to-end.
+2. **Add your key** — `cp .env.example .env` and set `SIGNOZ_API_KEY`.
+3. **Run the full arc** — `make demo-signoz`. This layers [`compose.signoz.yaml`](compose.signoz.yaml)
+   on top: Argus joins SigNoz's `signoz-network`, exports OTLP straight to the ingester, provisions the
+   hero dashboard from code, and the driver runs **PREVENT + LEARN** end-to-end. (Prefer no containers?
+   `python demo/drive.py` against a local `go run ./cmd/argusd` works identically — full runbook in
+   [`demo/README.md`](demo/README.md).)
 
 ### Point it at a real LLM
 

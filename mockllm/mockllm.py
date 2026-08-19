@@ -101,5 +101,6 @@ class Handler(BaseHTTPRequestHandler):
 
 
 if __name__ == "__main__":
-    print(f"mock LLM on 127.0.0.1:9099 (mode={MODE}, personas={list(MODES)})")
-    HTTPServer(("127.0.0.1", 9099), Handler).serve_forever()
+    host = os.getenv("MOCK_HOST", "127.0.0.1")  # set 0.0.0.0 to reach it from another container
+    print(f"mock LLM on {host}:9099 (mode={MODE}, personas={list(MODES)})")
+    HTTPServer((host, 9099), Handler).serve_forever()

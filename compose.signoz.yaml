@@ -1,0 +1,45 @@
+# SigNoz overlay — the full LEARN arc on top of the zero-dep base.
+#
+#   cp .env.example .env               # add your SigNoz API key
+#   make demo-signoz                   # base + this overlay + drive both beats
+#   # equivalently:
+#   docker compose -f compose.yaml -f compose.signoz.yaml up --build
+#
+# Requires a self-hosted SigNoz running on the host's `signoz-network` (stand it up
+# with Foundry — see DEPLOY.md). Argus joins that network and talks to SigNoz by
+# service DNS, so telemetry is a clean container->container gRPC hop (no host-loopback,
+# no Host-header rejection). Overridable via .env if your SigNoz names/ports differ.
+services:
+  argusd:
+    environment:
+      # Talk to SigNoz by service DNS on its own network — no host round-trip, so no
+      # host-port clash and no Host-header rejection. Export to the ingester; read the
+      # windowed LEARN decisions back from the query service (container port 8080).
+      OTLP_ENDPOINT: "${OTLP_ENDPOINT:-signoz-ingester-1:4317}"
+      SIGNOZ_URL: "${SIGNOZ_URL:-http://signoz-signoz-0:8080}"
+      SIGNOZ_API_KEY: "${SIGNOZ_API_KEY:?set SIGNOZ_API_KEY in .env — see .env.example}"
+    networks: [default, signoz]
+    # host-gateway kept so you can override SIGNOZ_URL/OTLP_ENDPOINT to host addresses.
+    extra_hosts: ["host.docker.internal:host-gateway"]
+
+  # one-shot: build the hero dashboard (+ trace panels) from code, then exit
+  provision:
+    image: python:3.13-slim
+    working_dir: /app
+    volumes: [".:/app"]
+    environment:
+      SIGNOZ_URL: "${SIGNOZ_URL:-http://signoz-signoz-0:8080}"
+      SIGNOZ_API_KEY: "${SIGNOZ_API_KEY:?set SIGNOZ_API_KEY in .env}"
+    extra_hosts: ["host.docker.internal:host-gateway"]
+    command: >
+      sh -c "python proofs/P4_dashboard/build_dashboard.py &&
+             python proofs/P4_dashboard/add_trace_panels.py ||
+             { echo; echo 'provision: could not reach the SigNoz query API at '\"$$SIGNOZ_URL\"'.';
+               echo 'Point SIGNOZ_URL at a query endpoint reachable from this container (.env), then rerun.';
+               echo 'The PREVENT demo needs none of this:  make demo'; exit 0; }"
+    restart: "no"
+
+networks:
+  signoz:
+    external: true
+    name: signoz-network

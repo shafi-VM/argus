@@ -12,6 +12,9 @@ env/
 .env
 *.local
 
+# Blog lives on Medium, not in the repo — never commit drafts
+blog/
+
 # SigNoz / docker local state
 clickhouse-data/
 signoz-data/

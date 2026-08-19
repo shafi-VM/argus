@@ -46,10 +46,34 @@ func newResource(ctx context.Context, serviceName string) (*resource.Resource, e
 		))
 }
 
+// otlpTarget returns the OTLP endpoint and whether export is enabled. Semantics:
+// OTLP_ENDPOINT unset -> default localhost:4317 (local dev against host SigNoz);
+// set but EMPTY -> export disabled (the zero-dependency demo tier — PREVENT and
+// Mission Control run with no backend at all); set non-empty -> that endpoint.
+func otlpTarget() (string, bool) {
+	v, ok := os.LookupEnv("OTLP_ENDPOINT")
+	if !ok {
+		return "localhost:4317", true
+	}
+	return v, v != ""
+}
+
 // Init configures the global tracer provider + propagator. Returns a shutdown func.
 func Init(ctx context.Context, serviceName string) (func(context.Context) error, error) {
+	endpoint, export := otlpTarget()
+	// Propagation always on: cross-service trace headers still parse/inject even
+	// when we're not exporting, so nothing downstream changes behavior by tier.
+	otel.SetTextMapPropagator(propagation.NewCompositeTextMapPropagator(
+		propagation.TraceContext{}, propagation.Baggage{},
+	))
+	if !export {
+		// No OTLP target: leave the global no-op TracerProvider in place. Spans
+		// become cheap no-ops; argusd needs no SigNoz to run its PREVENT reflex.
+		return func(context.Context) error { return nil }, nil
+	}
+
 	exp, err := otlptracegrpc.New(ctx,
-		otlptracegrpc.WithEndpoint(getenv("OTLP_ENDPOINT", "localhost:4317")),
+		otlptracegrpc.WithEndpoint(endpoint),
 		otlptracegrpc.WithInsecure(),
 	)
 	if err != nil {
@@ -66,9 +90,6 @@ func Init(ctx context.Context, serviceName string) (func(context.Context) error,
 		sdktrace.WithResource(res),
 	)
 	otel.SetTracerProvider(tp)
-	otel.SetTextMapPropagator(propagation.NewCompositeTextMapPropagator(
-		propagation.TraceContext{}, propagation.Baggage{},
-	))
 	return tp.Shutdown, nil
 }
 
@@ -76,8 +97,14 @@ func Init(ctx context.Context, serviceName string) (func(context.Context) error,
 // argus_* metrics (incl. the observable Intelligence Health gauge) ship to SigNoz
 // every ExportInterval. Short interval so the hero panel moves on demo cadence.
 func InitMetrics(ctx context.Context, serviceName string) (func(context.Context) error, error) {
+	endpoint, export := otlpTarget()
+	if !export {
+		// No OTLP target: leave the global no-op MeterProvider in place. The health
+		// gauge and argus_* counters become no-ops instead of failing to export.
+		return func(context.Context) error { return nil }, nil
+	}
 	exp, err := otlpmetricgrpc.New(ctx,
-		otlpmetricgrpc.WithEndpoint(getenv("OTLP_ENDPOINT", "localhost:4317")),
+		otlpmetricgrpc.WithEndpoint(endpoint),
 		otlpmetricgrpc.WithInsecure(),
 	)
 	if err != nil {
