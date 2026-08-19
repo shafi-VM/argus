@@ -183,6 +183,7 @@ The **Agents of SigNoz** hackathon — **Track 01: AI & Agent Observability**. S
 [`ARCHITECTURE.md`](ARCHITECTURE.md) (design doc) · [`VISION.md`](VISION.md) ·
 [`DECISIONS.md`](DECISIONS.md) (ADRs) · [`KILL_LIST.md`](KILL_LIST.md) ·
 [`TERMINOLOGY.md`](TERMINOLOGY.md) · [`DEPLOY.md`](DEPLOY.md) (Foundry / `casting.yaml`) ·
+[`deploy/aws/`](deploy/aws/) (Terraform — one-box AWS) ·
 [`DEMO_SCRIPT.md`](DEMO_SCRIPT.md) · [`demo/`](demo/) (runbook + driver) ·
 [`proofs/`](proofs/) (the de-risking harness) · [`JOURNAL.md`](JOURNAL.md) ·
 [`AI_USE.md`](AI_USE.md) (AI-assistant disclosure).
