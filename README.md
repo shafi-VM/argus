@@ -13,6 +13,12 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Observability: SigNoz](https://img.shields.io/badge/observability-SigNoz-e75a3f)](https://signoz.io)
 
+![Argus catching a hallucination inline — one command, HTTP 200, a few milliseconds](demo/argus-demo.gif)
+
+*`docker compose up` → `make demo`, no SigNoz and no API key: a hallucinated flight (`UA99`) is caught
+in the request path and corrected to the grounded `AA42` — **HTTP 200, a few milliseconds, the caller
+never sees the bad answer.** (Reproduce it: [Quickstart](#quickstart--one-command-zero-setup).)*
+
 ![Infrastructure green, intelligence collapsing — on one SigNoz dashboard](proofs/P4_dashboard/screenshots/hero-dashboard-top.png)
 
 *Every server is green. Every request returns `200`. And the answers are quietly wrong. That gap —
