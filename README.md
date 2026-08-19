@@ -73,6 +73,9 @@ flowchart LR
 - **LEARN** runs *out of band*: it reads the windowed decision back from SigNoz and, when a model's
   grounding rate degrades, installs a reroute that PREVENT applies on the very next request.
 
+→ **Full design doc** — request lifecycle, the five decisions, the SigNoz boundary, and the roadmap:
+[`ARCHITECTURE.md`](ARCHITECTURE.md).
+
 ## What works today — measured, live
 
 Reproduce it yourself: `python demo/drive.py` (runbook: [`demo/README.md`](demo/README.md)).
@@ -137,7 +140,8 @@ The **Agents of SigNoz** hackathon — **Track 01: AI & Agent Observability**. S
 
 ## Repo map
 
-[`VISION.md`](VISION.md) · [`DECISIONS.md`](DECISIONS.md) (ADRs) · [`KILL_LIST.md`](KILL_LIST.md) ·
+[`ARCHITECTURE.md`](ARCHITECTURE.md) (design doc) · [`VISION.md`](VISION.md) ·
+[`DECISIONS.md`](DECISIONS.md) (ADRs) · [`KILL_LIST.md`](KILL_LIST.md) ·
 [`TERMINOLOGY.md`](TERMINOLOGY.md) · [`DEPLOY.md`](DEPLOY.md) (Foundry / `casting.yaml`) ·
 [`DEMO_SCRIPT.md`](DEMO_SCRIPT.md) · [`demo/`](demo/) (runbook + driver) ·
 [`proofs/`](proofs/) (the de-risking harness) · [`JOURNAL.md`](JOURNAL.md) ·
