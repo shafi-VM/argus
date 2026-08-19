@@ -8,6 +8,11 @@
 
 **Portkey breaks the circuit on errors. OpenLIT watches. Argus closes the loop on behavior.**
 
+[![CI](https://github.com/shafi-VM/argus/actions/workflows/ci.yml/badge.svg)](https://github.com/shafi-VM/argus/actions/workflows/ci.yml)
+[![Go 1.25](https://img.shields.io/badge/Go-1.25-00ADD8?logo=go&logoColor=white)](go.mod)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Observability: SigNoz](https://img.shields.io/badge/observability-SigNoz-e75a3f)](https://signoz.io)
+
 ![Infrastructure green, intelligence collapsing — on one SigNoz dashboard](proofs/P4_dashboard/screenshots/hero-dashboard-top.png)
 
 *Every server is green. Every request returns `200`. And the answers are quietly wrong. That gap —
@@ -40,6 +45,33 @@ LEARN keeps **no state of its own.** Every quarantine decision it makes, it read
 `query_range` — the windowed behavioral truth, computed *from* the telemetry SigNoz stores. **Turn
 SigNoz off and Argus goes blind.** Most projects bolt an observability tool on as a dashboard; here it
 is the control loop's sensory input. *(PREVENT stays inline and never blocks on SigNoz — ADR-0003.)*
+
+## Architecture
+
+Two reflexes on one binary, with SigNoz as the sensory input for the slow loop:
+
+```mermaid
+flowchart LR
+    A["AI agent<br/>(any OpenAI-compatible client)"] -->|"chat request"| G
+
+    subgraph G["argusd — gateway (Go, one binary)"]
+        direction TB
+        P["PREVENT · inline<br/>deterministic grounding check<br/>block → re-ground · sub-ms"]
+        L["LEARN · windowed poller"]
+    end
+
+    G -->|"forwarded + caller's API key"| M["LLM provider<br/>OpenAI · Groq · demo mock"]
+    M -->|"answer"| G
+    G -->|"corrected answer<br/>(caller never sees the bad one)"| A
+
+    G -. "OTLP: traces + argus_* metrics" .-> S[("SigNoz")]
+    L -. "reads windowed decision<br/>via query_range" .-> S
+    L -->|"quarantine / reroute a model"| P
+```
+
+- **PREVENT** runs *inline* and depends on nothing external — it can never be slowed by SigNoz (ADR-0003).
+- **LEARN** runs *out of band*: it reads the windowed decision back from SigNoz and, when a model's
+  grounding rate degrades, installs a reroute that PREVENT applies on the very next request.
 
 ## What works today — measured, live
 
@@ -76,6 +108,21 @@ one command*. This repo ships the exact Foundry config ([`casting.yaml`](casting
 1. **Bring up SigNoz** — `foundryctl forge` → `docker compose up` (see [`DEPLOY.md`](DEPLOY.md)).
 2. **Run the gateway + agent + replay engine, then measure the demo beats** — full runbook in
    [`demo/README.md`](demo/README.md); `python demo/drive.py` drives PREVENT + LEARN end-to-end.
+
+### Point it at a real LLM
+
+argusd is a drop-in, OpenAI-compatible proxy — it **forwards your `Authorization` header and provider
+headers upstream**, so it works in front of any real provider, not just the demo mock. Point your
+agent's `base_url` at argusd and set the upstream:
+
+```bash
+# your agent keeps calling with its usual `Authorization: Bearer <key>` — argusd passes it through
+ARGUS_UPSTREAM=https://api.openai.com       go run ./cmd/argusd
+ARGUS_UPSTREAM=https://api.groq.com/openai  go run ./cmd/argusd   # any OpenAI-compatible endpoint
+```
+
+Every call then flows through PREVENT + LEARN + SigNoz unchanged. *(LEARN and all telemetry — traces,
+metrics, cost — work with any provider; PREVENT's grounding is entity-presence, see **Honest limits**.)*
 
 ## Stack
 
