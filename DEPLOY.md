@@ -59,3 +59,11 @@ python demo/drive.py                                        # runs + measures th
 Provision the hero dashboard from code (Option A does this automatically):
 `proofs/P4_dashboard/build_dashboard.py` then `add_trace_panels.py` (both take `SIGNOZ_URL` +
 `SIGNOZ_API_KEY`).
+
+## 3. Run it on AWS (Terraform, one box)
+
+A lightweight Terraform module stands the whole stack up on a single EC2 host and tears it down
+again — deployability as a **reproducible artifact**, not an always-on server. Treat cloud credit as
+on-demand demo fuel: `apply` for a demo window, `destroy` when done. See
+**[`deploy/aws/`](deploy/aws/)** for the module + runbook (cost math, teardown, and security notes
+included).

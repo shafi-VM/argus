@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+# cloud-init bootstrap for the Argus box. Reliably brings up TIER-1 (PREVENT +
+# Mission Control, zero dependencies). The SigNoz-backed LEARN tier is a documented
+# follow-on step (see deploy/aws/README.md) — it needs a SigNoz API key that can only
+# be minted after SigNoz's first boot, so it is not automated here.
+set -uxo pipefail
+exec > >(tee -a /var/log/argus-bootstrap.log) 2>&1
+echo "[argus] bootstrap start $(date -u)"
+
+export DEBIAN_FRONTEND=noninteractive
+apt-get update -y
+apt-get install -y ca-certificates curl git jq make
+
+# Docker Engine + compose plugin (official convenience script).
+curl -fsSL https://get.docker.com | sh
+systemctl enable --now docker
+usermod -aG docker ubuntu || true
+
+# Clone Argus and let the interactive user drive it without sudo.
+git clone ${repo_url} /opt/argus
+chown -R ubuntu:ubuntu /opt/argus
+cd /opt/argus
+
+# --- Tier 1: PREVENT + Mission Control (no SigNoz, always works) ---
+docker compose up -d --build
+echo "[argus] tier-1 up: Mission Control on :8088/mission"
+
+# Login banner with the next steps.
+cat > /etc/motd <<'MOTD'
+──────────────────────────────────────────────────────────────────────
+  Argus box.  Tier-1 (PREVENT) is live at  http://<this-ip>:8088/mission
+  Drive the money moment:   cd /opt/argus && make demo
+  Enable LEARN (SigNoz):    deploy/aws/README.md  — bring up SigNoz, mint
+                            an API key, put it in .env, then make demo-signoz
+  Bootstrap log:            /var/log/argus-bootstrap.log
+──────────────────────────────────────────────────────────────────────
+MOTD
+
+echo "[argus] bootstrap done $(date -u)"
