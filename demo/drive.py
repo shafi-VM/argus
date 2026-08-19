@@ -50,11 +50,20 @@ def set_drift(on):
 
 
 def preflight():
-    try:
-        urllib.request.urlopen(ARGUS + "/healthz", timeout=3)
-        urllib.request.urlopen(MOCK + "/admin/chaos", timeout=3)
-    except Exception as e:
-        raise SystemExit("stack not up (%s). See demo/README.md — start mock + argusd first." % e)
+    """Wait for the stack (both argusd and the replay engine cold-start under compose)
+    and report whether LEARN is live (needs SigNoz). The PREVENT beat runs in any tier;
+    the LEARN beat is skipped when the poller is off."""
+    last = None
+    for _ in range(20):  # ~20s: tolerate a slow container boot
+        try:
+            urllib.request.urlopen(ARGUS + "/healthz", timeout=3)
+            urllib.request.urlopen(MOCK + "/admin/chaos", timeout=3)
+            state = json.load(urllib.request.urlopen(ARGUS + "/mission/state", timeout=3))
+            return bool(state.get("learn", {}).get("active"))
+        except Exception as e:
+            last = e
+            time.sleep(1)
+    raise SystemExit("stack not up (%s). See demo/README.md — start mock + argusd first." % last)
 
 
 def beat_prevent():
@@ -106,10 +115,17 @@ def beat_learn():
 
 
 def main():
-    preflight()
+    learn_live = preflight()
     print("Argus demo driver — measuring the deterministic beats")
     print("Mission Control: %s/mission" % ARGUS)
-    results = [beat_prevent(), beat_learn()]
+    results = [beat_prevent()]
+    if learn_live:
+        results.append(beat_learn())
+    else:
+        print("\n== BEAT · LEARN — skipped (no SigNoz) ==")
+        print("  The LEARN poller reads windowed decisions from SigNoz query_range;")
+        print("  it's off in this zero-dependency tier. Run the full arc with SigNoz:")
+        print("      make demo-signoz            (see DEPLOY.md)")
     set_drift(False)  # leave the stack clean/green
 
     print("\n================ MEASURED BEAT TIMINGS ================")

@@ -27,9 +27,10 @@ type Provider interface {
 // Handler serves the control surface. chaosURL is the demo fault target (the replay
 // engine's /admin/chaos); empty disables the chaos control.
 type Handler struct {
-	gw       Provider
-	chaosURL string
-	client   *http.Client
+	gw          Provider
+	chaosURL    string
+	client      *http.Client
+	learnActive bool
 }
 
 func New(gw Provider, chaosURL string) *Handler {
@@ -39,6 +40,11 @@ func New(gw Provider, chaosURL string) *Handler {
 		client:   &http.Client{Timeout: 2 * time.Second},
 	}
 }
+
+// SetLearnActive records whether the LEARN poller is running (it only runs when
+// SigNoz creds are present). Mission Control and the demo driver read this so they
+// tell the truth about which reflexes are live in the current tier.
+func (h *Handler) SetLearnActive(v bool) *Handler { h.learnActive = v; return h }
 
 func (h *Handler) Register(mux *http.ServeMux) {
 	mux.HandleFunc("GET /mission", h.page)
@@ -72,6 +78,7 @@ func (h *Handler) state(w http.ResponseWriter, r *http.Request) {
 			"agoMs":        ago(s.LastDecisionAt),
 		},
 		"learn": map[string]any{
+			"active":      h.learnActive,
 			"quarantined": s.Quarantined,
 			"healthy":     len(s.Quarantined) == 0,
 		},

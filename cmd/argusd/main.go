@@ -46,6 +46,7 @@ func main() {
 
 	// LEARN loop: only if SigNoz creds are present. It reads the windowed health
 	// BACK from SigNoz and quarantines/reroutes via the gateway (the Actuator).
+	learnOn := false
 	if url, key := os.Getenv("SIGNOZ_URL"), os.Getenv("SIGNOZ_API_KEY"); url != "" && key != "" {
 		poller := learn.New(learn.Config{
 			Client:   learn.NewSigNoz(url, key),
@@ -55,6 +56,7 @@ func main() {
 			Interval: 2 * time.Second,
 		})
 		go poller.Run(ctx)
+		learnOn = true
 		log.Printf("LEARN poller on: reading windowed decision from SigNoz query_range at %s", url)
 	} else {
 		log.Printf("LEARN poller off (set SIGNOZ_URL + SIGNOZ_API_KEY to enable)")
@@ -67,7 +69,7 @@ func main() {
 	// Mission Control: the demo god-mode surface. Reads live state from the gateway
 	// (in-process, ADR-0003) and drives ONE control — inject/stop drift. The chaos
 	// target defaults to the upstream, which IS the replay engine in the demo.
-	mission.New(gw, getenv("ARGUS_CHAOS_URL", upstream)).Register(mux)
+	mission.New(gw, getenv("ARGUS_CHAOS_URL", upstream)).SetLearnActive(learnOn).Register(mux)
 
 	addr := getenv("ARGUS_ADDR", ":8088")
 	log.Printf("Mission Control at http://localhost%s/mission", addr)

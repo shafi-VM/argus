@@ -1,0 +1,31 @@
+# Argus — one command, zero dependencies.
+#
+#   docker compose up --build          # gateway + replay engine
+#   open http://localhost:8088/mission # watch it live
+#   make demo                          # drive the money moment (PREVENT)
+#
+# This is the airplane-safe tier: PREVENT (inline grounding + recovery) and Mission
+# Control run entirely in-process — no SigNoz, no API key, no network. OTLP export is
+# OFF (OTLP_ENDPOINT="" ) so argusd stays quiet with no backend to ship to.
+#
+# For the full LEARN arc (drift -> quarantine -> reroute -> recover) through SigNoz,
+# layer the overlay:  make demo-signoz   (see compose.signoz.yaml + DEPLOY.md).
+name: argus
+
+services:
+  mockllm:
+    image: python:3.13-slim
+    working_dir: /app
+    volumes: [".:/app:ro"]
+    environment:
+      MOCK_HOST: "0.0.0.0"        # reachable from the argusd container
+    command: python mockllm/mockllm.py
+    ports: ["9099:9099"]          # published so `make demo` can drive chaos from the host
+
+  argusd:
+    build: .
+    depends_on: [mockllm]
+    environment:
+      ARGUS_UPSTREAM: "http://mockllm:9099"
+      OTLP_ENDPOINT: ""            # empty = telemetry export disabled (no SigNoz needed)
+    ports: ["8088:8088"]          # gateway + Mission Control at http://localhost:8088/mission
