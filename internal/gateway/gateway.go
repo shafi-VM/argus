@@ -191,7 +191,7 @@ func (g *Gateway) ChatCompletions(w http.ResponseWriter, r *http.Request) {
 	// fixture file — that keeps the check honest for any caller, not just our agent.
 	provided := grounding.ExtractContext(req.Messages)
 
-	respBody, status, err := g.call(ctx, body)
+	respBody, status, err := g.call(ctx, body, r.Header)
 	if err != nil {
 		decision, statusClass = "transport_error", "5xx"
 		g.fail(w, span, err)
@@ -245,7 +245,7 @@ func (g *Gateway) ChatCompletions(w http.ResponseWriter, r *http.Request) {
 		trace.WithSpanKind(trace.SpanKindInternal))
 	rspan.SetAttributes(attribute.StringSlice("argus.grounding.unsupported", res.Unsupported))
 
-	rBody, rStatus, rErr := g.call(rctx, withReground(body))
+	rBody, rStatus, rErr := g.call(rctx, withReground(body), r.Header)
 	if rErr != nil {
 		rspan.RecordError(rErr)
 		rspan.SetStatus(codes.Error, rErr.Error())
@@ -333,13 +333,29 @@ func costOf(respBody []byte) float64 {
 	return float64(r.Usage.PromptTokens+r.Usage.CompletionTokens) * perToken
 }
 
-func (g *Gateway) call(ctx context.Context, body []byte) ([]byte, int, error) {
+// forwardHeaders are copied from the caller's request to the upstream provider so
+// argusd works as a drop-in proxy IN FRONT OF A REAL LLM (OpenAI / Groq / any
+// OpenAI-compatible endpoint): the caller's API key and provider-specific headers
+// pass through untouched. The demo mock ignores them; a real provider needs them.
+var forwardHeaders = []string{
+	"Authorization",
+	"Api-Key", "X-Api-Key",
+	"OpenAI-Organization", "OpenAI-Project", "OpenAI-Beta",
+	"Anthropic-Version", "Anthropic-Beta",
+}
+
+func (g *Gateway) call(ctx context.Context, body []byte, in http.Header) ([]byte, int, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost,
 		g.upstream+"/v1/chat/completions", bytes.NewReader(body))
 	if err != nil {
 		return nil, 0, err
 	}
 	req.Header.Set("Content-Type", "application/json")
+	for _, h := range forwardHeaders { // pass the caller's auth/provider headers upstream
+		if v := in.Get(h); v != "" {
+			req.Header.Set(h, v)
+		}
+	}
 	otel.GetTextMapPropagator().Inject(ctx, propagation.HeaderCarrier(req.Header))
 
 	resp, err := g.client.Do(req)
